@@ -6,3 +6,4 @@ minimumReleaseAge: 60
 allowBuilds:
   lefthook: true
   sharp: true
+  supabase: true
