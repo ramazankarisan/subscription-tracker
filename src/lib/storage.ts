@@ -1,23 +1,19 @@
 /**
- * Persistence. The entire app state is a single JSON blob in localStorage.
+ * Offline read cache. The source of truth now lives in Supabase (per user);
+ * this keeps a copy of the last-seen state in localStorage so the app can
+ * render instantly on open and still show data when briefly offline.
+ *
  * Loading is defensive: any corruption or missing field falls back to defaults
  * rather than crashing the app.
  */
 import type { AppData, AppSettings } from '../types';
 
-const STORAGE_KEY = 'subscription-tracker:v1';
+const STORAGE_KEY = 'subscription-tracker:v2';
 
 export const defaultSettings: AppSettings = {
   reminderLeadDays: 7,
-  email: {
-    enabled: false,
-    autoSendOnOpen: true,
-    serviceId: '',
-    templateId: '',
-    publicKey: '',
-    toEmail: '',
-  },
-  lastEmailSentDate: null,
+  reminderOffsets: [3, 0],
+  recipientEmail: '',
 };
 
 export const emptyData: AppData = {
@@ -26,10 +22,15 @@ export const emptyData: AppData = {
   settings: defaultSettings,
 };
 
-/** Read state from localStorage, merging over defaults so new fields are safe. */
-export function loadData(): AppData {
+/** Per-user cache key so switching accounts never mixes data. */
+export function cacheKeyForUser(userId: string): string {
+  return `${STORAGE_KEY}:${userId}`;
+}
+
+/** Read cached state for a user, merging over defaults so new fields are safe. */
+export function loadData(key: string): AppData {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return emptyData;
     const parsed = JSON.parse(raw) as Partial<AppData>;
     return {
@@ -42,7 +43,9 @@ export function loadData(): AppData {
       settings: {
         ...defaultSettings,
         ...parsed.settings,
-        email: { ...defaultSettings.email, ...parsed.settings?.email },
+        reminderOffsets: Array.isArray(parsed.settings?.reminderOffsets)
+          ? parsed.settings.reminderOffsets
+          : defaultSettings.reminderOffsets,
       },
     };
   } catch {
@@ -50,10 +53,10 @@ export function loadData(): AppData {
   }
 }
 
-/** Persist state. Swallows quota/serialisation errors — this is best-effort. */
-export function saveData(data: AppData): void {
+/** Persist cached state for a user. Best-effort — swallows quota errors. */
+export function saveData(key: string, data: AppData): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(key, JSON.stringify(data));
   } catch {
     // Storage full or unavailable (e.g. private mode) — nothing we can do.
   }

@@ -1,0 +1,5 @@
+# Minimal Supabase config. The reminder function does its own auth (validates
+# the user's token for test sends, and a shared CRON_SECRET for scheduled runs),
+# so platform JWT verification is disabled for it.
+[functions.send-reminders]
+verify_jwt = false

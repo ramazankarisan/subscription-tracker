@@ -20,13 +20,15 @@ There is no test runner configured. Type-checking happens as part of `pnpm build
 
 ## Architecture
 
-A serverless, phone-first PWA (Vite + React 19 + TypeScript) for tracking subscription renewals and installment plans, with optional client-side email reminders. There is no backend and no accounts — **all state is a single JSON blob in `localStorage`**.
+A phone-first PWA (Vite + React 19 + TypeScript) for tracking subscription renewals and installment plans, with **server-scheduled** email reminders. Data is stored **per user in Supabase** (Postgres + magic-link auth + Row Level Security); a daily Supabase Edge Function emails reminders even when the app is closed. A localStorage copy is kept purely as an offline read cache. Setup: `docs/supabase-setup.md`.
 
 ### Data flow
 
 - `src/types.ts` — the domain model (`Subscription`, `Installment`, `AppData`, settings). Everything is plain JSON: **dates are stored as ISO day strings (`"yyyy-MM-dd"`), never `Date` objects.**
-- `src/state/useAppData.tsx` — the single store. A React context holds one `AppData` object (`useState`), persisted back to `localStorage` on every change via an effect. Components read data and call typed action helpers (`addSubscription`, `markSubscriptionRenewed`, `markInstallmentPaid`, …); **components never touch `localStorage` directly.**
-- `src/lib/storage.ts` — load/save the blob. Loading is defensive: corruption or missing fields fall back to defaults (merged over `defaultSettings`), so schema additions are safe. Save errors are swallowed (quota / private mode).
+- `src/lib/supabase.ts` — the Supabase browser client (URL + anon key from `VITE_SUPABASE_*` env). `src/components/AuthGate.tsx` gates the app behind a magic-link sign-in and passes the `AuthedUser` down.
+- `src/state/useAppData.tsx` — the single store, scoped to the signed-in user. Renders instantly from the localStorage cache, fetches the user's rows from Supabase, then applies every action **optimistically** to local state and writes it through to Supabase (insert/update/upsert/delete). Components call typed action helpers (`addSubscription`, `markSubscriptionRenewed`, …); **components never touch Supabase or localStorage directly.**
+- `src/lib/mappers.ts` — converts between snake_case DB rows and camelCase domain objects (column names live only here).
+- `src/lib/storage.ts` — the per-user localStorage read cache (`cacheKeyForUser`). Loading is defensive: corruption / missing fields fall back to defaults.
 
 ### Date logic (the core domain rules)
 
@@ -34,14 +36,17 @@ All calendar math lives in `src/lib/dates.ts` and goes through `date-fns` — do
 
 - **Subscriptions**: "mark renewed" calls `advanceByCycle` then `rollForwardToFuture`, which skips any cycles already in the past (handles the app not being opened for a while).
 - **Installments**: the next payment date is `firstPaymentDate + paidPayments × intervalMonths`; "paid one" / "undo" just increments/decrements `paidPayments` (clamped).
-- `src/lib/reminders.ts` — `getDueItems(data, leadDays)` flattens subscriptions + installments into one sorted list of what's due within the lead window (overdue included). This is the single source of truth shared by both the Dashboard (render) and the email sender (summarise), so they always agree.
+- `src/lib/reminders.ts` — `getDueItems(data, leadDays)` flattens subscriptions + installments into one sorted list of what's due within the lead window (overdue included). Used by the Dashboard to render the "due soon" list.
 
-### Email reminders (no backend)
+### Email reminders (server-side)
 
-Email is sent **from the browser** via EmailJS (`@emailjs/browser`) using the user's own Service ID / Template ID / Public Key entered in Settings. The template must reference `{{to_email}}`, `{{subject}}`, `{{message}}` (see `docs/emailjs-template.html`).
+A daily **Supabase Edge Function** (`supabase/functions/send-reminders/`, Deno) emails reminders via **Resend** (free tier, `onboarding@resend.dev` → the user's own inbox). It runs on a **Supabase Cron** schedule, so mail goes out even when the app is closed.
 
-- `src/lib/email.ts` — builds the message from due items and calls EmailJS.
-- `src/hooks/useAutoEmailOnOpen.ts` — because there's no server/cron, the reminder is sent **when the app is opened**, at most once per day (guarded by `settings.lastEmailSentDate`). A module-level `hasAttempted` flag also neutralises React StrictMode's double-effect in dev. It marks "sent" before sending so a quick refresh can't double-send.
+- **Schedule**: for each item and each configured offset in `settings.reminderOffsets` (default `[3, 0]` = 3 days before + on the day), it fires when today is within a short catch-up window of `dueDate − offset`.
+- **Idempotency**: the `reminder_log` table records every `(item, reminder_date, offset)` sent, so a reminder goes out at most once even if the cron double-runs or catches up a missed day.
+- The function is **self-contained** (reimplements the small date/message logic in Deno) because Supabase bundles only the function's own directory — it does not import from `src/`.
+- **Test send**: Settings / Dashboard call the same function with `{ test: true }` (authenticated by the user's token) to email a preview immediately. Scheduled runs authenticate with a shared `CRON_SECRET`.
+- `supabase/schema.sql` — tables + RLS + `reminder_log`. Run once in the SQL editor.
 
 ### UI
 

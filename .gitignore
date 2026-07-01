@@ -18,6 +18,7 @@ dev-dist
 # Local env / secrets (never commit)
 .env
 .env.*
+!.env.example
 *.key
 *.pem
 
@@ -34,3 +35,7 @@ dev-dist
 
 # Claude Code local worktrees (never commit)
 .claude/worktrees/
+
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/

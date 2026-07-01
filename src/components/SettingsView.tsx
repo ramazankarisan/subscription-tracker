@@ -1,42 +1,57 @@
 /**
- * Settings: reminder window, EmailJS credentials, a test-send button, and
- * JSON backup/restore of all data.
+ * Settings: dashboard window, server-side reminder schedule + recipient, a
+ * test-send button (invokes the Edge Function), and JSON backup/restore.
  */
 import { useRef, useState, type ChangeEvent } from 'react';
 
-import { isEmailConfigured, sendReminderEmail } from '../lib/email';
 import { exportData } from '../lib/storage';
-import { getDueItems } from '../lib/reminders';
+import { supabase } from '../lib/supabase';
 import { useAppData } from '../state/useAppData';
 import type { AppData } from '../types';
 import { MailIcon } from './icons';
 
 type TestState = 'idle' | 'sending' | 'sent' | 'error';
 
+/** Offsets the user can toggle; 0 = on the due date itself. */
+const OFFSET_CHOICES: { value: number; label: string }[] = [
+  { value: 0, label: 'On the day' },
+  { value: 1, label: '1 day before' },
+  { value: 3, label: '3 days before' },
+  { value: 7, label: '7 days before' },
+];
+
 export function SettingsView() {
-  const { data, settings, updateSettings, updateEmailSettings, replaceData } =
-    useAppData();
-  const { email } = settings;
+  const { data, settings, updateSettings, replaceData } = useAppData();
 
   const [testState, setTestState] = useState<TestState>('idle');
   const [testMessage, setTestMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const toggleOffset = (value: number) => {
+    const set = new Set(settings.reminderOffsets);
+    if (set.has(value)) {
+      set.delete(value);
+    } else {
+      set.add(value);
+    }
+    updateSettings({ reminderOffsets: [...set].sort((a, b) => b - a) });
+  };
+
   const handleTestSend = async () => {
     setTestState('sending');
     setTestMessage('');
-    const dueItems = getDueItems(data, settings.reminderLeadDays);
-    // Fall back to a single placeholder line so a test still proves the wiring
-    // even when nothing is actually due.
-    const items = dueItems.length > 0 ? dueItems : getDueItems(data, 3650); // widen window to grab anything at all
-    try {
-      await sendReminderEmail(email, items);
-      setTestState('sent');
-      setTestMessage(`Test email sent to ${email.toEmail}.`);
-    } catch (error) {
+    const { error } = await supabase.functions.invoke('send-reminders', {
+      body: { test: true },
+    });
+    if (error) {
       setTestState('error');
       setTestMessage(
         error instanceof Error ? error.message : 'Failed to send test email.',
+      );
+    } else {
+      setTestState('sent');
+      setTestMessage(
+        `Test email sent to ${settings.recipientEmail || 'your inbox'}.`,
       );
     }
   };
@@ -82,9 +97,9 @@ export function SettingsView() {
       </div>
 
       <div className="settings-group">
-        <h2>Reminders</h2>
+        <h2>Dashboard</h2>
         <label className="field">
-          <span>Remind me about anything due within (days)</span>
+          <span>Show anything due within (days)</span>
           <input
             type="number"
             inputMode="numeric"
@@ -100,89 +115,48 @@ export function SettingsView() {
       </div>
 
       <div className="settings-group">
-        <h2>Email (EmailJS)</h2>
+        <h2>Email reminders</h2>
         <p className="settings-hint">
-          Emails are sent straight from your browser using{' '}
-          <a href="https://www.emailjs.com/" target="_blank" rel="noreferrer">
-            EmailJS
-          </a>{' '}
-          (free tier). Create a free account, add an email service and a
-          template that uses the variables <code>{'{{to_email}}'}</code>,{' '}
-          <code>{'{{subject}}'}</code> and <code>{'{{message}}'}</code>, then
-          paste your IDs below.
+          A daily job emails you before anything is due — even when the app is
+          closed. Pick when to be reminded and where to send it. On Resend's
+          free tier this must be your own Resend account email (no domain to
+          verify).
         </p>
 
-        <label className="checkbox-field">
-          <input
-            type="checkbox"
-            checked={email.enabled}
-            onChange={(event) =>
-              updateEmailSettings({ enabled: event.target.checked })
-            }
-          />
-          <span>Enable email reminders</span>
-        </label>
-
-        <label className="checkbox-field">
-          <input
-            type="checkbox"
-            checked={email.autoSendOnOpen}
-            onChange={(event) =>
-              updateEmailSettings({ autoSendOnOpen: event.target.checked })
-            }
-          />
-          <span>Automatically email me when I open the app (once per day)</span>
-        </label>
-
         <label className="field">
-          <span>Recipient email</span>
+          <span>Send reminders to</span>
           <input
             type="email"
-            value={email.toEmail}
+            value={settings.recipientEmail}
             onChange={(event) =>
-              updateEmailSettings({ toEmail: event.target.value })
+              updateSettings({ recipientEmail: event.target.value })
             }
             placeholder="you@example.com"
           />
         </label>
-        <label className="field">
-          <span>Service ID</span>
-          <input
-            type="text"
-            value={email.serviceId}
-            onChange={(event) =>
-              updateEmailSettings({ serviceId: event.target.value })
-            }
-            placeholder="service_xxxxxxx"
-          />
-        </label>
-        <label className="field">
-          <span>Template ID</span>
-          <input
-            type="text"
-            value={email.templateId}
-            onChange={(event) =>
-              updateEmailSettings({ templateId: event.target.value })
-            }
-            placeholder="template_xxxxxxx"
-          />
-        </label>
-        <label className="field">
-          <span>Public key</span>
-          <input
-            type="text"
-            value={email.publicKey}
-            onChange={(event) =>
-              updateEmailSettings({ publicKey: event.target.value })
-            }
-            placeholder="XXXXXXXXXXXXXXXX"
-          />
-        </label>
+
+        <span className="field-label">Remind me…</span>
+        <div className="chip-row">
+          {OFFSET_CHOICES.map((choice) => {
+            const active = settings.reminderOffsets.includes(choice.value);
+            return (
+              <button
+                key={choice.value}
+                type="button"
+                className={`chip ${active ? 'chip-active' : ''}`}
+                aria-pressed={active}
+                onClick={() => toggleOffset(choice.value)}
+              >
+                {choice.label}
+              </button>
+            );
+          })}
+        </div>
 
         <button
           className="button button-primary button-block"
           onClick={handleTestSend}
-          disabled={!isEmailConfigured(email) || testState === 'sending'}
+          disabled={!settings.recipientEmail || testState === 'sending'}
         >
           <MailIcon size={18} />
           {testState === 'sending' ? 'Sending…' : 'Send test email'}
@@ -201,8 +175,7 @@ export function SettingsView() {
       <div className="settings-group">
         <h2>Backup</h2>
         <p className="settings-hint">
-          Your data lives only in this browser. Export a copy to keep it safe or
-          move it to another device.
+          Export a copy of your data, or restore it from a previous backup.
         </p>
         <div className="button-pair">
           <button className="button button-ghost" onClick={handleExport}>

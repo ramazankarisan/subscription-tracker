@@ -1,9 +1,10 @@
 /**
  * Core domain types for the tracker.
  *
- * Everything is persisted to the browser's localStorage (see `lib/storage.ts`),
- * so all shapes are plain JSON-serialisable data — no Date objects, dates are
- * stored as ISO day strings ("yyyy-MM-dd").
+ * Data is persisted per-user in Supabase (see `lib/supabase.ts` +
+ * `state/useAppData.tsx`), with a localStorage copy kept purely as an offline
+ * read cache (see `lib/storage.ts`). All shapes are plain JSON-serialisable
+ * data — no Date objects, dates are stored as ISO day strings ("yyyy-MM-dd").
  */
 
 export type BillingCycle =
@@ -40,23 +41,16 @@ export interface Installment {
   notes: string;
 }
 
-/** EmailJS credentials + recipient, all entered by the user in Settings. */
-export interface EmailSettings {
-  enabled: boolean;
-  /** Send a summary automatically when the app is opened (once per day). */
-  autoSendOnOpen: boolean;
-  serviceId: string;
-  templateId: string;
-  publicKey: string;
-  toEmail: string;
-}
-
 export interface AppSettings {
-  /** Remind about anything due within this many days. */
+  /** Dashboard "due soon" window: show anything due within this many days. */
   reminderLeadDays: number;
-  email: EmailSettings;
-  /** Guard so the auto-email fires at most once per day, ISO "yyyy-MM-dd". */
-  lastEmailSentDate: string | null;
+  /**
+   * Which days-before-a-due-date the server should email a reminder.
+   * e.g. [3, 0] = 3 days before AND on the due date itself. `0` = on the day.
+   */
+  reminderOffsets: number[];
+  /** Inbox the scheduled reminder emails are sent to (defaults to sign-in email). */
+  recipientEmail: string;
 }
 
 /** The full persisted state blob. */
