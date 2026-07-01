@@ -118,7 +118,9 @@ export function SettingsView() {
         <h2>Email reminders</h2>
         <p className="settings-hint">
           A daily job emails you before anything is due — even when the app is
-          closed. Pick when to be reminded and where to send it.
+          closed. Pick when to be reminded and where to send it. On Resend's
+          free tier this must be your own Resend account email (no domain to
+          verify).
         </p>
 
         <label className="field">

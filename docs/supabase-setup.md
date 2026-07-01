@@ -34,6 +34,8 @@ never commit. You do the dashboard steps; the code is already in the repo.
 2. **API Keys → Create** 🔒 → this is `RESEND_API_KEY`.
 3. Free tier sends from `onboarding@resend.dev` to **your own inbox** — no domain
    needed. (Emailing other people would require verifying a domain; out of scope.)
+   ⚠️ Set the app's **"Send reminders to"** (Settings) to this **same** email —
+   the one your Resend account uses. Any other address returns a Resend 403.
 
 ## 3. Deploy the Edge Function + secrets
 
