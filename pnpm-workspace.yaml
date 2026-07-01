@@ -1,0 +1,8 @@
+# Relax pnpm's built-in supply-chain guard from the 24h default to 60 minutes:
+# still blocks brand-new (<1h) packages, but lets recently-published deps
+# (oxlint's native bindings, vite) install without a day-long wait.
+minimumReleaseAge: 60
+
+allowBuilds:
+  lefthook: true
+  sharp: true
