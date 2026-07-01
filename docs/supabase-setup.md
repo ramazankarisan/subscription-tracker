@@ -41,19 +41,25 @@ With the [Supabase CLI](https://supabase.com/docs/guides/cli) (`supabase login`,
 then `supabase link --project-ref YOUR-REF`):
 
 ```bash
-# Secrets (🔒). CRON_SECRET is any long random string you invent.
-supabase secrets set RESEND_API_KEY=re_xxx CRON_SECRET=$(openssl rand -hex 24)
+# CRON_SECRET is a random password YOU invent — Supabase doesn't give it to you,
+# and it must MATCH the value in the cron SQL below. Generate one you can see
+# (don't inline $(openssl ...) — you'd never learn the value it set):
+openssl rand -hex 24                        # copy the printed value
+
+supabase secrets set RESEND_API_KEY=re_xxx CRON_SECRET=<paste-that-value>
 # service_role + URL are provided to functions automatically.
 
-supabase functions deploy send-reminders   # config.toml sets verify_jwt=false
+supabase functions deploy send-reminders    # config.toml sets verify_jwt=false
 ```
 
-Note the function URL: `https://YOUR-PROJECT.functions.supabase.co/send-reminders`.
+Function URL (used below): `https://<project-ref>.supabase.co/functions/v1/send-reminders`.
+`<project-ref>` is the string after `/project/` in the dashboard URL.
 
 ## 4. Schedule the daily run
 
 **Database → Extensions**: enable `pg_cron` and `pg_net`. Then in the **SQL
-Editor**, run (substitute your URL + the `CRON_SECRET` you set):
+Editor**, run — replacing `<project-ref>` with yours and `<CRON_SECRET>` with the
+**exact same** value you set above:
 
 ```sql
 select cron.schedule(
@@ -61,9 +67,9 @@ select cron.schedule(
   '0 8 * * *',                       -- 08:00 UTC every day
   $$
   select net.http_post(
-    url     := 'https://YOUR-PROJECT.functions.supabase.co/send-reminders',
+    url     := 'https://<project-ref>.supabase.co/functions/v1/send-reminders',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer YOUR_CRON_SECRET',
+      'Authorization', 'Bearer <CRON_SECRET>',
       'Content-Type',  'application/json'
     ),
     body    := '{}'::jsonb
