@@ -28,6 +28,14 @@ const REMINDER_FROM =
 /** Recover a missed daily run: a reminder can still fire this many days late. */
 const CATCHUP_DAYS = 2;
 
+/** CORS: the browser (test send) calls this from a different origin than *.supabase.co. */
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 // ---------- Types ----------
@@ -337,10 +345,15 @@ async function runAllUsers() {
 // ---------- HTTP entry ----------
 
 Deno.serve(async (req) => {
+  // Answer the browser's CORS preflight before doing anything else.
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   const json = (status: number, obj: unknown) =>
     new Response(JSON.stringify(obj), {
       status,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   let body: { test?: boolean; secret?: string } = {};
