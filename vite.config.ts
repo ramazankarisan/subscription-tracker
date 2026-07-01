@@ -4,6 +4,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Served from https://ramazankarisan.github.io/subscription-tracker/ (GitHub
+  // Pages project site), so every asset URL is prefixed with this subpath.
+  base: '/subscription-tracker/',
   plugins: [
     react(),
     VitePWA({
@@ -23,8 +26,10 @@ export default defineConfig({
         background_color: '#131118',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
-        scope: '/',
+        // Must match the GitHub Pages subpath so the installed PWA and its
+        // service worker are scoped correctly.
+        start_url: '/subscription-tracker/',
+        scope: '/subscription-tracker/',
       },
     }),
   ],
