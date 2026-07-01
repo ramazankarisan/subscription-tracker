@@ -43,8 +43,10 @@ jobs:
         run: pnpm build
         env:
           # Public Supabase config, set in repo Settings → Variables. Baked into
-          # the static build; RLS is what actually protects the data.
+          # the static build; RLS is what actually protects the data. Set either
+          # the publishable key (current) or the legacy anon key.
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 
       - name: Upload Pages artifact

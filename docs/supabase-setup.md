@@ -78,7 +78,8 @@ The daily query also keeps the free project from idling.
 
 - **Local**: copy `.env.example` → `.env`, fill in the URL + anon key, `pnpm dev`.
 - **GitHub Pages**: repo **Settings → Secrets and variables → Actions →
-  Variables** → add `VITE_SUPABASE_URL` 🔓 and `VITE_SUPABASE_ANON_KEY` 🔓.
+  Variables** → add `VITE_SUPABASE_URL` 🔓 and `VITE_SUPABASE_PUBLISHABLE_KEY`
+  🔓 (or `VITE_SUPABASE_ANON_KEY` for a legacy key).
   The deploy workflow bakes them into the build. (Then **Settings → Pages →
   Source: GitHub Actions** if not already set.)
 
