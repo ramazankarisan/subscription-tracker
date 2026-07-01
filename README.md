@@ -32,8 +32,8 @@ pnpm format     # prettier --write .
 1. Deploy `dist/` to any free static host (Netlify, Vercel, GitHub Pages, …),
    or run `pnpm dev --host` and open your computer's LAN URL on the phone.
 2. Open the URL in the phone browser.
-3. **iOS Safari:** Share → *Add to Home Screen*.
-   **Android Chrome:** menu → *Install app* / *Add to Home screen*.
+3. **iOS Safari:** Share → _Add to Home Screen_.
+   **Android Chrome:** menu → _Install app_ / _Add to Home screen_.
 
 > A PWA needs HTTPS (or `localhost`) for the service worker, so for real
 > home-screen use, deploy to a host that serves HTTPS.
@@ -56,7 +56,7 @@ summary of everything due within your reminder window — once per day.
 - **Subscriptions** have a next-renewal date and a billing cycle. "Renewed"
   advances the date by one cycle (skipping any cycles already in the past).
 - **Installments** compute the next payment as `firstPaymentDate + paidPayments
-  × interval`. "Paid one" increments the paid count; "Undo" decrements it.
+× interval`. "Paid one" increments the paid count; "Undo" decrements it.
 - Anything within your reminder window (or overdue) shows up on the Dashboard
   and in the email.
 

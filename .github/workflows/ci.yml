@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backpressure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history so base-ref / diff detection works
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (oxlint)
+        run: pnpm exec oxlint --deny-warnings
+
+      - name: Format (prettier)
+        run: pnpm exec prettier --check --cache --ignore-unknown .
+
+      - name: Typecheck (tsc)
+        run: pnpm exec tsc -b --noEmit
+
+      - name: Dead code / unused deps (knip)
+        run: pnpm exec knip --production --strict
+
+      - name: Secrets (secretlint)
+        run: pnpm exec secretlint --secretlintignore .gitignore "**/*"
+
+      - name: Build
+        run: pnpm build

@@ -11,7 +11,9 @@ node_modules
 .pnpm-store
 dist
 dist-ssr
+dev-dist
 *.local
+*.tsbuildinfo
 
 # Local env / secrets (never commit)
 .env
@@ -30,3 +32,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Code local worktrees (never commit)
+.claude/worktrees/
+
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/

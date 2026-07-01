@@ -1,0 +1,30 @@
+# Backpressure git hooks (developer-facing). See docs/backpressure.md.
+# Every gate is scoped to changed/staged files and no-op-safe: lefthook skips a
+# command when its glob matches nothing in the change set.
+#
+# Tools are referenced via node_modules/.bin (lefthook runs from the repo root
+# and does not put node_modules/.bin on PATH), so bare names would not resolve.
+
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: '*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css,md,html,yml,yaml}'
+      run: node_modules/.bin/prettier --write --cache --ignore-unknown {staged_files}
+      stage_fixed: true
+    lint:
+      glob: '*.{ts,tsx}'
+      run: node_modules/.bin/oxlint --deny-warnings {staged_files}
+    secrets:
+      glob: '*'
+      run: node_modules/.bin/secretlint --secretlintignore .gitignore {staged_files}
+
+pre-push:
+  parallel: false
+  commands:
+    typecheck:
+      run: node_modules/.bin/tsc -b --noEmit
+    knip:
+      run: node_modules/.bin/knip --production --strict
+    build:
+      run: node_modules/.bin/vite build
