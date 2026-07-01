@@ -165,16 +165,29 @@ function buildBody(lines: string[]): string {
 
 // ---------- Resend ----------
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Send one email via Resend, retrying the per-second rate limit (HTTP 429,
+ * `over_email_send_rate_limit`). Honours a `Retry-After` header when present,
+ * otherwise backs off ~0.6s, 1.2s, 1.8s. Other errors throw immediately.
+ */
 async function sendEmail(to: string, subject: string, text: string) {
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ from: REMINDER_FROM, to, subject, text }),
-  });
-  if (!res.ok) {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from: REMINDER_FROM, to, subject, text }),
+    });
+    if (res.ok) return;
+    if (res.status === 429 && attempt < 3) {
+      const retryAfter = Number(res.headers.get('Retry-After')) || 0;
+      await sleep(retryAfter > 0 ? retryAfter * 1000 : 600 * (attempt + 1));
+      continue;
+    }
     throw new Error(`Resend ${res.status}: ${await res.text()}`);
   }
 }
@@ -326,12 +339,16 @@ async function runAllUsers() {
     .from('app_settings')
     .select('user_id,reminder_offsets,recipient_email');
   let sentTo = 0;
+  let first = true;
   for (const row of settings ?? []) {
     const recipient = await recipientFor(row.user_id, row.recipient_email);
     if (!recipient) continue;
     const offsets: number[] = row.reminder_offsets?.length
       ? row.reminder_offsets
       : [3, 0];
+    // Space out sends to stay under Resend's 2 req/sec limit across many users.
+    if (!first) await sleep(600);
+    first = false;
     try {
       const r = await processUser(row.user_id, offsets, recipient, false);
       if (r.sent) sentTo += 1;
