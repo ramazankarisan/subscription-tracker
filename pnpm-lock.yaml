@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@emailjs/browser':
-        specifier: ^4.4.1
-        version: 4.4.1
+      '@supabase/supabase-js':
+        specifier: ^2.58.0
+        version: 2.110.0
       date-fns:
         specifier: ^4.4.0
         version: 4.4.0
@@ -563,10 +563,6 @@ packages:
 
   '@canvas/image-data@1.1.0':
     resolution: {integrity: sha512-QdObRRjRbcXGmM1tmJ+MrHcaz1MftF2+W7YI+MsphnsCrmtyfS0d5qJbk0MeSbUeyM/jCb0hmnkXPsy026L7dA==}
-
-  '@emailjs/browser@4.4.1':
-    resolution: {integrity: sha512-DGSlP9sPvyFba3to2A50kDtZ+pXVp/0rhmqs2LmbMS3I5J8FSOgLwzY2Xb4qfKlOVHh29EAutLYwe5yuEZmEFg==}
-    engines: {node: '>=14.0.0'}
 
   '@emnapi/core@1.11.1':
     resolution: {integrity: sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ==}
@@ -1136,6 +1132,33 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@supabase/auth-js@2.110.0':
+    resolution: {integrity: sha512-Mi288WCTp6wxMFCOu/UgzgHEXODjdl2uVTLqK11eanzGZaldU3RyP8Am+ZbNuVzFP+5+iOvppxzv7N5Ym84xTg==}
+    engines: {node: '>=22.0.0'}
+
+  '@supabase/functions-js@2.110.0':
+    resolution: {integrity: sha512-Fde5wlY8ZZy+9yqrWlQHo8MacSyUBArBEtN2boB4thJQigPnQD/cc61qZN0n3I1L0gwhWtHYwIMnOBKxSvF6Hw==}
+    engines: {node: '>=22.0.0'}
+
+  '@supabase/phoenix@0.4.4':
+    resolution: {integrity: sha512-Gt0pqoXuIqX/8dvG0OKp/wMCobXNH3klNbUPBNyOfN0YA1IswrM3HyWFMOPk1Jy+BRaIyDPcFx4jLBwHNmlyfQ==}
+
+  '@supabase/postgrest-js@2.110.0':
+    resolution: {integrity: sha512-ZbC1QZL3jcvBUfVKjJbgRM27G4Mg3Zzqdm44m5pJafe1e52Cli793EOnwQucomBAGEUDd03Nzaf7XV3ji/XexQ==}
+    engines: {node: '>=22.0.0'}
+
+  '@supabase/realtime-js@2.110.0':
+    resolution: {integrity: sha512-Wn2AWpneZuDFTkp/65tqctvoh+3JvyTjMam8sTMqVWy5BgkU8zAvFwilPYPPPhkINeKF8NAJKP7FclJ2iGCUMw==}
+    engines: {node: '>=22.0.0'}
+
+  '@supabase/storage-js@2.110.0':
+    resolution: {integrity: sha512-71+gU3HrhiylAhftY6FmO5PPdcsScnVcS766CVD+vTYK9qTDLbrx8FhgBYbqGm3iV/wkTfzrNJfjGsMeFRkJRQ==}
+    engines: {node: '>=22.0.0'}
+
+  '@supabase/supabase-js@2.110.0':
+    resolution: {integrity: sha512-8yI84VJiEVW4zxZpLUmxXmjzQ7O2St9X/ymzlBETDHTURPWG3LmvbSiibq+7dqAJmyoUfxZnSfXeM4HCM8s4XQ==}
+    engines: {node: '>=22.0.0'}
+
   '@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1':
     resolution: {integrity: sha512-/67zpWDBLV+oYAEL682s1ktXL0HgqX76f6gaVGkGnVZlBbm1zd0v4Bz8MFF2GGhoX9rvfq3KSQHubFHwa6w6/Q==}
     engines: {node: '>=12'}
@@ -1534,6 +1557,10 @@ packages:
   hasown@2.0.4:
     resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==}
     engines: {node: '>= 0.4'}
+
+  iceberg-js@0.8.1:
+    resolution: {integrity: sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA==}
+    engines: {node: '>=20.0.0'}
 
   ico-endec@0.1.6:
     resolution: {integrity: sha512-ZdLU38ZoED3g1j3iEyzcQj+wAkY2xfWNkymszfJPoxucIUhK7NayQ+/C4Kv0nDFMIsbtbEHldv3V8PU494/ueQ==}
@@ -2986,8 +3013,6 @@ snapshots:
 
   '@canvas/image-data@1.1.0': {}
 
-  '@emailjs/browser@4.4.1': {}
-
   '@emnapi/core@1.11.1':
     dependencies:
       '@emnapi/wasi-threads': 1.2.2
@@ -3343,6 +3368,38 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.62.2':
     optional: true
+
+  '@supabase/auth-js@2.110.0':
+    dependencies:
+      tslib: 2.8.1
+
+  '@supabase/functions-js@2.110.0':
+    dependencies:
+      tslib: 2.8.1
+
+  '@supabase/phoenix@0.4.4': {}
+
+  '@supabase/postgrest-js@2.110.0':
+    dependencies:
+      tslib: 2.8.1
+
+  '@supabase/realtime-js@2.110.0':
+    dependencies:
+      '@supabase/phoenix': 0.4.4
+      tslib: 2.8.1
+
+  '@supabase/storage-js@2.110.0':
+    dependencies:
+      iceberg-js: 0.8.1
+      tslib: 2.8.1
+
+  '@supabase/supabase-js@2.110.0':
+    dependencies:
+      '@supabase/auth-js': 2.110.0
+      '@supabase/functions-js': 2.110.0
+      '@supabase/postgrest-js': 2.110.0
+      '@supabase/realtime-js': 2.110.0
+      '@supabase/storage-js': 2.110.0
 
   '@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1':
     dependencies:
@@ -3808,6 +3865,8 @@ snapshots:
   hasown@2.0.4:
     dependencies:
       function-bind: 1.1.2
+
+  iceberg-js@0.8.1: {}
 
   ico-endec@0.1.6: {}
 
@@ -4449,8 +4508,7 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  tslib@2.8.1:
-    optional: true
+  tslib@2.8.1: {}
 
   type-fest@0.16.0: {}
 

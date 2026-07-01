@@ -6,9 +6,9 @@
 import { useState } from 'react';
 
 import { formatDate, relativeDayLabel } from '../lib/dates';
-import { isEmailConfigured, sendReminderEmail } from '../lib/email';
 import { formatCurrency } from '../lib/format';
 import { getDueItems, type DueItem } from '../lib/reminders';
+import { supabase } from '../lib/supabase';
 import { useAppData } from '../state/useAppData';
 import type { Subscription } from '../types';
 import { BellIcon, CardIcon, InstallmentsIcon, MailIcon } from './icons';
@@ -40,8 +40,7 @@ export function Dashboard({
 }: {
   onNavigateToSettings: () => void;
 }) {
-  const { data, subscriptions, installments, settings, updateSettings } =
-    useAppData();
+  const { data, subscriptions, installments, settings } = useAppData();
   const leadDays = settings.reminderLeadDays;
 
   const [sendState, setSendState] = useState<SendState>('idle');
@@ -70,21 +69,19 @@ export function Dashboard({
     0,
   );
 
-  const emailReady =
-    settings.email.enabled && isEmailConfigured(settings.email);
+  const emailReady = Boolean(settings.recipientEmail);
 
   const handleSendNow = async () => {
     setSendState('sending');
     setSendError('');
-    try {
-      await sendReminderEmail(settings.email, dueItems);
-      updateSettings({
-        lastEmailSentDate: new Date().toISOString().slice(0, 10),
-      });
-      setSendState('sent');
-    } catch (error) {
+    const { error } = await supabase.functions.invoke('send-reminders', {
+      body: { test: true },
+    });
+    if (error) {
       setSendState('error');
       setSendError(error instanceof Error ? error.message : 'Failed to send');
+    } else {
+      setSendState('sent');
     }
   };
 
@@ -153,23 +150,21 @@ export function Dashboard({
       <div className="email-box">
         {emailReady ? (
           <>
+            <p className="settings-hint">
+              Reminders are emailed to {settings.recipientEmail} automatically.
+              Send yourself one now to check it works:
+            </p>
             <button
               className="button button-primary button-block"
               onClick={handleSendNow}
-              disabled={sendState === 'sending' || dueItems.length === 0}
+              disabled={sendState === 'sending'}
             >
               <MailIcon size={18} />
-              {sendState === 'sending'
-                ? 'Sending…'
-                : dueItems.length === 0
-                  ? 'Nothing to email'
-                  : `Email me these ${dueItems.length} reminder${
-                      dueItems.length === 1 ? '' : 's'
-                    }`}
+              {sendState === 'sending' ? 'Sending…' : 'Send me a test email'}
             </button>
             {sendState === 'sent' && (
               <p className="email-status email-status-ok">
-                Sent to {settings.email.toEmail}.
+                Sent to {settings.recipientEmail}.
               </p>
             )}
             {sendState === 'error' && (

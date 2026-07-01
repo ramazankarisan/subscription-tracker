@@ -1,12 +1,14 @@
 /**
  * Single source of truth for all app data, exposed via React context.
  *
- * State lives in one object (`AppData`) initialised from localStorage and
- * written back on every change. Components read the current data and call the
- * typed action helpers — they never touch localStorage directly.
+ * Persistence now lives in Supabase (per authenticated user). The provider:
+ *   1. renders instantly from a localStorage cache (offline-friendly),
+ *   2. fetches the user's rows from Supabase and replaces the cache,
+ *   3. applies every action optimistically to local state, then writes it
+ *      through to Supabase (insert / update / upsert / delete).
  *
- * (Structurally: this is the app's "store". In this small PWA a context +
- * useState replaces what Redux Toolkit would do in the main work repo.)
+ * Components read the current data and call the typed action helpers — they
+ * never touch Supabase or localStorage directly.
  */
 import {
   createContext,
@@ -14,25 +16,41 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 
 import { advanceByCycle, rollForwardToFuture } from '../lib/dates';
-import { loadData, saveData } from '../lib/storage';
-import type {
-  AppData,
-  AppSettings,
-  EmailSettings,
-  Installment,
-  Subscription,
-} from '../types';
+import {
+  installmentToRow,
+  rowToInstallment,
+  rowToSettings,
+  rowToSubscription,
+  settingsToRow,
+  subscriptionToRow,
+  type InstallmentRow,
+  type SettingsRow,
+  type SubscriptionRow,
+} from '../lib/mappers';
+import { cacheKeyForUser, emptyData, loadData, saveData } from '../lib/storage';
+import { supabase } from '../lib/supabase';
+import type { AppData, AppSettings, Installment, Subscription } from '../types';
+
+/** The signed-in user this store is scoped to. */
+export interface AuthedUser {
+  id: string;
+  email: string;
+}
 
 interface AppDataContextValue {
   data: AppData;
   subscriptions: Subscription[];
   installments: Installment[];
   settings: AppSettings;
+  userEmail: string;
+  /** True until the first Supabase fetch resolves. */
+  loading: boolean;
 
   addSubscription: (input: Omit<Subscription, 'id'>) => void;
   updateSubscription: (id: string, patch: Partial<Subscription>) => void;
@@ -46,8 +64,8 @@ interface AppDataContextValue {
   markInstallmentUnpaid: (id: string) => void;
 
   updateSettings: (patch: Partial<AppSettings>) => void;
-  updateEmailSettings: (patch: Partial<EmailSettings>) => void;
   replaceData: (data: AppData) => void;
+  signOut: () => Promise<void>;
 }
 
 const AppDataContext = createContext<AppDataContextValue | null>(null);
@@ -56,132 +74,264 @@ function newId(): string {
   return crypto.randomUUID();
 }
 
-export function AppDataProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<AppData>(loadData);
+export function AppDataProvider({
+  user,
+  children,
+}: {
+  user: AuthedUser;
+  children: ReactNode;
+}) {
+  const cacheKey = cacheKeyForUser(user.id);
+  const [data, setData] = useState<AppData>(() => loadData(cacheKey));
+  const [loading, setLoading] = useState(true);
 
-  // Persist on every change.
+  // Keep a ref to the latest data so persistence helpers can read it without
+  // being recreated on every change.
+  const dataRef = useRef(data);
+  dataRef.current = data;
+
+  // Update local state (optimistic) and mirror to the offline cache.
+  const apply = useCallback(
+    (updater: (prev: AppData) => AppData) => {
+      setData((prev) => {
+        const next = updater(prev);
+        saveData(cacheKey, next);
+        return next;
+      });
+    },
+    [cacheKey],
+  );
+
+  // Initial load: fetch this user's rows and seed a settings row if missing.
   useEffect(() => {
-    saveData(data);
-  }, [data]);
+    let cancelled = false;
 
-  const addSubscription = useCallback((input: Omit<Subscription, 'id'>) => {
-    setData((prev) => ({
-      ...prev,
-      subscriptions: [...prev.subscriptions, { ...input, id: newId() }],
-    }));
-  }, []);
+    async function load() {
+      setLoading(true);
+      const [subs, insts, settingsRes] = await Promise.all([
+        supabase.from('subscriptions').select('*').eq('user_id', user.id),
+        supabase.from('installments').select('*').eq('user_id', user.id),
+        supabase
+          .from('app_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+
+      // On any fetch error, keep the cached data rather than wiping the UI.
+      if (subs.error || insts.error || settingsRes.error) {
+        setLoading(false);
+        return;
+      }
+
+      let settings: AppSettings;
+      if (settingsRes.data) {
+        settings = rowToSettings(settingsRes.data as SettingsRow);
+      } else {
+        // First sign-in: create a settings row defaulting reminders to my inbox.
+        settings = { ...emptyData.settings, recipientEmail: user.email };
+        await supabase
+          .from('app_settings')
+          .upsert(settingsToRow(settings, user.id));
+      }
+
+      const next: AppData = {
+        subscriptions: (subs.data as SubscriptionRow[]).map(rowToSubscription),
+        installments: (insts.data as InstallmentRow[]).map(rowToInstallment),
+        settings,
+      };
+      saveData(cacheKey, next);
+      setData(next);
+      setLoading(false);
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id, user.email, cacheKey]);
+
+  const addSubscription = useCallback(
+    (input: Omit<Subscription, 'id'>) => {
+      const sub: Subscription = { ...input, id: newId() };
+      apply((prev) => ({
+        ...prev,
+        subscriptions: [...prev.subscriptions, sub],
+      }));
+      void supabase
+        .from('subscriptions')
+        .insert(subscriptionToRow(sub, user.id));
+    },
+    [apply, user.id],
+  );
 
   const updateSubscription = useCallback(
     (id: string, patch: Partial<Subscription>) => {
-      setData((prev) => ({
+      apply((prev) => ({
         ...prev,
         subscriptions: prev.subscriptions.map((item) =>
           item.id === id ? { ...item, ...patch } : item,
         ),
       }));
+      const updated = dataRef.current.subscriptions.find((s) => s.id === id);
+      if (updated) {
+        void supabase
+          .from('subscriptions')
+          .update(subscriptionToRow({ ...updated, ...patch }, user.id))
+          .eq('id', id);
+      }
     },
-    [],
+    [apply, user.id],
   );
 
-  const deleteSubscription = useCallback((id: string) => {
-    setData((prev) => ({
-      ...prev,
-      subscriptions: prev.subscriptions.filter((item) => item.id !== id),
-    }));
-  }, []);
+  const deleteSubscription = useCallback(
+    (id: string) => {
+      apply((prev) => ({
+        ...prev,
+        subscriptions: prev.subscriptions.filter((item) => item.id !== id),
+      }));
+      void supabase.from('subscriptions').delete().eq('id', id);
+    },
+    [apply],
+  );
 
-  const markSubscriptionRenewed = useCallback((id: string) => {
-    setData((prev) => ({
-      ...prev,
-      subscriptions: prev.subscriptions.map((item) => {
-        if (item.id !== id) return item;
-        // The current renewal happened: advance one cycle, then skip any
-        // further cycles that are already in the past.
-        const advanced = advanceByCycle(
-          item.nextRenewal,
-          item.cycle,
-          item.customIntervalDays,
-        );
-        const nextRenewal = rollForwardToFuture(
-          advanced,
-          item.cycle,
-          item.customIntervalDays,
-        );
-        return { ...item, nextRenewal };
-      }),
-    }));
-  }, []);
+  const markSubscriptionRenewed = useCallback(
+    (id: string) => {
+      const current = dataRef.current.subscriptions.find((s) => s.id === id);
+      if (!current) return;
+      // The current renewal happened: advance one cycle, then skip any further
+      // cycles already in the past.
+      const advanced = advanceByCycle(
+        current.nextRenewal,
+        current.cycle,
+        current.customIntervalDays,
+      );
+      const nextRenewal = rollForwardToFuture(
+        advanced,
+        current.cycle,
+        current.customIntervalDays,
+      );
+      updateSubscription(id, { nextRenewal });
+    },
+    [updateSubscription],
+  );
 
-  const addInstallment = useCallback((input: Omit<Installment, 'id'>) => {
-    setData((prev) => ({
-      ...prev,
-      installments: [...prev.installments, { ...input, id: newId() }],
-    }));
-  }, []);
+  const addInstallment = useCallback(
+    (input: Omit<Installment, 'id'>) => {
+      const inst: Installment = { ...input, id: newId() };
+      apply((prev) => ({
+        ...prev,
+        installments: [...prev.installments, inst],
+      }));
+      void supabase
+        .from('installments')
+        .insert(installmentToRow(inst, user.id));
+    },
+    [apply, user.id],
+  );
 
   const updateInstallment = useCallback(
     (id: string, patch: Partial<Installment>) => {
-      setData((prev) => ({
+      apply((prev) => ({
         ...prev,
         installments: prev.installments.map((item) =>
           item.id === id ? { ...item, ...patch } : item,
         ),
       }));
+      const updated = dataRef.current.installments.find((i) => i.id === id);
+      if (updated) {
+        void supabase
+          .from('installments')
+          .update(installmentToRow({ ...updated, ...patch }, user.id))
+          .eq('id', id);
+      }
     },
-    [],
+    [apply, user.id],
   );
 
-  const deleteInstallment = useCallback((id: string) => {
-    setData((prev) => ({
-      ...prev,
-      installments: prev.installments.filter((item) => item.id !== id),
-    }));
-  }, []);
+  const deleteInstallment = useCallback(
+    (id: string) => {
+      apply((prev) => ({
+        ...prev,
+        installments: prev.installments.filter((item) => item.id !== id),
+      }));
+      void supabase.from('installments').delete().eq('id', id);
+    },
+    [apply],
+  );
 
-  const markInstallmentPaid = useCallback((id: string) => {
-    setData((prev) => ({
-      ...prev,
-      installments: prev.installments.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              paidPayments: Math.min(item.totalPayments, item.paidPayments + 1),
-            }
-          : item,
-      ),
-    }));
-  }, []);
+  const markInstallmentPaid = useCallback(
+    (id: string) => {
+      const current = dataRef.current.installments.find((i) => i.id === id);
+      if (!current) return;
+      updateInstallment(id, {
+        paidPayments: Math.min(current.totalPayments, current.paidPayments + 1),
+      });
+    },
+    [updateInstallment],
+  );
 
-  const markInstallmentUnpaid = useCallback((id: string) => {
-    setData((prev) => ({
-      ...prev,
-      installments: prev.installments.map((item) =>
-        item.id === id
-          ? { ...item, paidPayments: Math.max(0, item.paidPayments - 1) }
-          : item,
-      ),
-    }));
-  }, []);
+  const markInstallmentUnpaid = useCallback(
+    (id: string) => {
+      const current = dataRef.current.installments.find((i) => i.id === id);
+      if (!current) return;
+      updateInstallment(id, {
+        paidPayments: Math.max(0, current.paidPayments - 1),
+      });
+    },
+    [updateInstallment],
+  );
 
-  const updateSettings = useCallback((patch: Partial<AppSettings>) => {
-    setData((prev) => ({
-      ...prev,
-      settings: { ...prev.settings, ...patch },
-    }));
-  }, []);
+  const updateSettings = useCallback(
+    (patch: Partial<AppSettings>) => {
+      const next = { ...dataRef.current.settings, ...patch };
+      apply((prev) => ({ ...prev, settings: next }));
+      void supabase.from('app_settings').upsert(settingsToRow(next, user.id));
+    },
+    [apply, user.id],
+  );
 
-  const updateEmailSettings = useCallback((patch: Partial<EmailSettings>) => {
-    setData((prev) => ({
-      ...prev,
-      settings: {
-        ...prev.settings,
-        email: { ...prev.settings.email, ...patch },
-      },
-    }));
-  }, []);
+  // Import/restore: replace everything for this user, server-side too.
+  const replaceData = useCallback(
+    (incoming: AppData) => {
+      const next: AppData = {
+        subscriptions: incoming.subscriptions,
+        installments: incoming.installments,
+        settings: { ...emptyData.settings, ...incoming.settings },
+      };
+      apply(() => next);
+      void (async () => {
+        await Promise.all([
+          supabase.from('subscriptions').delete().eq('user_id', user.id),
+          supabase.from('installments').delete().eq('user_id', user.id),
+        ]);
+        await Promise.all([
+          next.subscriptions.length
+            ? supabase
+                .from('subscriptions')
+                .insert(
+                  next.subscriptions.map((s) => subscriptionToRow(s, user.id)),
+                )
+            : Promise.resolve(),
+          next.installments.length
+            ? supabase
+                .from('installments')
+                .insert(
+                  next.installments.map((i) => installmentToRow(i, user.id)),
+                )
+            : Promise.resolve(),
+          supabase
+            .from('app_settings')
+            .upsert(settingsToRow(next.settings, user.id)),
+        ]);
+      })();
+    },
+    [apply, user.id],
+  );
 
-  const replaceData = useCallback((next: AppData) => {
-    setData(next);
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
   }, []);
 
   const value = useMemo<AppDataContextValue>(
@@ -190,6 +340,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       subscriptions: data.subscriptions,
       installments: data.installments,
       settings: data.settings,
+      userEmail: user.email,
+      loading,
       addSubscription,
       updateSubscription,
       deleteSubscription,
@@ -200,11 +352,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       markInstallmentPaid,
       markInstallmentUnpaid,
       updateSettings,
-      updateEmailSettings,
       replaceData,
+      signOut,
     }),
     [
       data,
+      user.email,
+      loading,
       addSubscription,
       updateSubscription,
       deleteSubscription,
@@ -215,8 +369,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       markInstallmentPaid,
       markInstallmentUnpaid,
       updateSettings,
-      updateEmailSettings,
       replaceData,
+      signOut,
     ],
   );
 

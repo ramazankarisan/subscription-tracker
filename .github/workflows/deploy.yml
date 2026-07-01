@@ -41,6 +41,11 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          # Public Supabase config, set in repo Settings → Variables. Baked into
+          # the static build; RLS is what actually protects the data.
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
