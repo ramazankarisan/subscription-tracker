@@ -6,10 +6,16 @@ never commit. You do the dashboard steps; the code is already in the repo.
 ## 1. Supabase project
 
 1. Create a free project at https://supabase.com (save the DB password).
-2. **Project Settings → API**, copy:
+2. Copy two **public** values (both safe to expose — RLS protects the data):
    - **Project URL** 🔓 → `VITE_SUPABASE_URL`
-   - **anon public** key 🔓 → `VITE_SUPABASE_ANON_KEY`
-   - **service_role** key 🔒 → used only as a function secret (below), never in the app.
+     — **Settings → API** (or the **Connect** button), format `https://<ref>.supabase.co`.
+   - **Publishable key** 🔓 → `VITE_SUPABASE_ANON_KEY`
+     — **Settings → API Keys**. New projects show a **Publishable key**
+     (`sb_publishable_…`); older ones show **anon public** (`eyJ…`) under the
+     **Legacy API Keys** tab. Either works — same low privileges, same RLS.
+   - You do **not** need the service_role / secret key: Supabase auto-injects
+     `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` into
+     Edge Functions, so the reminder function already has them.
 3. **SQL Editor** → paste and run [`supabase/schema.sql`](../supabase/schema.sql).
 4. **Authentication → Sign In / Providers → Email**: ensure it's enabled
    (it's on by default — magic link works out of the box). Note: the built-in
