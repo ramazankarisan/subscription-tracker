@@ -11,7 +11,9 @@ never commit. You do the dashboard steps; the code is already in the repo.
    - **anon public** key 🔓 → `VITE_SUPABASE_ANON_KEY`
    - **service_role** key 🔒 → used only as a function secret (below), never in the app.
 3. **SQL Editor** → paste and run [`supabase/schema.sql`](../supabase/schema.sql).
-4. **Authentication → Providers → Email**: ensure it's enabled (magic link is on by default).
+4. **Authentication → Sign In / Providers → Email**: ensure it's enabled
+   (it's on by default — magic link works out of the box). Note: the built-in
+   sender allows ~2 auth emails/hour; enough for personal use.
 5. **Authentication → URL Configuration**: add your site URL
    `https://ramazankarisan.github.io/subscription-tracker/` to **Site URL** and
    **Redirect URLs** (and `http://localhost:5173/` for local dev), so magic
