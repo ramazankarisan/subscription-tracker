@@ -1,55 +1,50 @@
-# SubTrack — Your Setup Tasks
+# SubTrack — Setup
 
-Only **you** can do these (accounts, dashboards, secrets). Everything else is code Claude writes.
+The app is **set up and live** at
+`https://ramazankarisan.github.io/subscription-tracker/`. This file is the
+high-level checklist of the one-time, human-only tasks (accounts, dashboards,
+secrets). For the exact click-by-click steps, follow the canonical guide:
+**[`docs/supabase-setup.md`](docs/supabase-setup.md)**.
 
-Legend: 🔓 public / safe to share · 🔒 secret — never paste into the repo
+Legend: 🔓 public / safe to share · 🔒 secret — never commit.
 
-## Phase 0 — Unblock installs (2 min)
+## Toolchain
 
-- [ ] Run `pnpm install` in the project.
-- [ ] If it fails with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` (vite / electron-to-chromium
-      "within the cutoff"), it's the MaibornWolff supply-chain policy rejecting packages
-      published < 24h ago. Options: wait for the rolling window to clear, or
-      `pnpm install --config.minimum-release-age=0` for a one-off, or tell Claude to
-      re-resolve the lockfile to aged versions.
+- `pnpm install` — the repo pins a 60-minute supply-chain guard in
+  `pnpm-workspace.yaml` (`minimumReleaseAge`), so brand-new (<1h) packages are
+  blocked but normal installs work.
 
-## Phase 1 — Backpressure (nothing to sign up for)
+## Quality gates (backpressure)
 
-- [ ] After Claude wires the hooks, do one guided test commit + push to confirm they fire.
-- [ ] See `docs/backpressure.md` for what each gate does and how to bypass in a pinch.
+- Installed automatically (`pnpm install` runs `lefthook install`). Pre-commit
+  runs prettier + oxlint + secretlint; pre-push runs typecheck + knip + build;
+  CI re-runs everything. Details + bypasses: `docs/backpressure.md`.
 
-## Phase 2 — Supabase (database + auth + cron)
+## Supabase — database + auth + daily cron
 
-- [ ] Create a free account at https://supabase.com and a new project (region near you).
-- [ ] Save the database password somewhere safe.
-- [ ] Settings → API: copy **Project URL** 🔓 and **anon public key** 🔓 → give to Claude (go in `.env`).
-- [ ] Settings → API: copy the **service_role key** 🔒 → paste into Supabase secrets later, **not** the repo.
-- [ ] SQL Editor: run the `schema.sql` Claude provides (tables, RLS, `reminder_log`).
-- [ ] Authentication → Providers: confirm **Email (magic link)** is enabled.
-- [ ] Edge Functions → Secrets: add `RESEND_API_KEY` 🔒, `SUPABASE_SERVICE_ROLE_KEY` 🔒, and your recipient email.
-- [ ] Integrations → Cron: schedule the `send-reminders` function daily (Claude gives the exact expression).
+- [ ] Free project → copy **Project URL** 🔓 and **Publishable key** 🔓 (from the
+      **Connect** dialog) into repo env / Variables. The service_role key is **not**
+      needed — Supabase injects it into Edge Functions.
+- [ ] SQL editor → run `supabase/schema.sql` (tables, RLS, `reminder_log`).
+- [ ] Authentication → **URL Configuration** → add the Pages URL (and
+      `http://localhost:5173/`) to Site URL + Redirect URLs.
+- [ ] Deploy the function + secrets, then schedule the daily cron — see the guide.
 
-## Phase 2 — Resend (sends the emails)
+## Resend — email
 
-- [ ] Create a free account at https://resend.com.
-- [ ] Verify your own email address (the recipient).
-- [ ] API Keys → create one 🔒 → paste into Supabase secrets (above). Do **not** commit it.
-- [ ] Note: free tier sends from `onboarding@resend.dev` to your own inbox — no domain to buy.
+- [ ] Free account, verify your own email, create an API key 🔒 (set as a Supabase
+      function secret, never committed). Free tier sends `onboarding@resend.dev` →
+      **your own inbox** only.
 
-## Phase 2 — GitHub Pages (hosts the installable app)
+## GitHub Pages — hosting
 
-You've set `base: '/subscription-tracker/'` in `vite.config.ts` for this.
+- [ ] Repo **Settings → Pages → Source: GitHub Actions**.
+- [ ] Repo **Settings → Actions → Variables**: `VITE_SUPABASE_URL` 🔓 and
+      `VITE_SUPABASE_PUBLISHABLE_KEY` 🔓. Every push to `main` deploys.
 
-- [ ] Repo → Settings → Pages: set **Source = GitHub Actions**.
-- [ ] Repo → Settings → Secrets and variables → Actions → **Variables**: add
-      `VITE_SUPABASE_URL` 🔓 and `VITE_SUPABASE_ANON_KEY` 🔓 (baked in at CI build time;
-      fine — the anon key is public with RLS on).
-- [ ] Claude adds a Pages deploy workflow in Phase 2 that builds and publishes `dist/`.
-- [ ] After the first deploy, open `https://ramazankarisan.github.io/subscription-tracker/`
-      on your phone → **Add to Home Screen**.
+## Secrets recap
 
-## Reminders about secrets
-
-- 🔒 service_role key, Resend API key → live **only** in Supabase's secret store.
-- 🔓 Project URL + anon key → fine in `.env` / GitHub Actions Variables (designed to be public with RLS on).
-- `secretlint` (Phase 1) blocks any 🔒 value that accidentally gets staged.
+- 🔒 Resend API key + `CRON_SECRET` → live **only** in Supabase's secret store.
+- 🔓 Project URL + publishable/anon key → fine in `.env` / Actions Variables
+  (public by design; Row Level Security protects the data).
+- `secretlint` blocks any 🔒 value that accidentally gets staged.

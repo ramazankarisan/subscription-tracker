@@ -8,15 +8,34 @@ Package manager is **pnpm**.
 
 ```bash
 pnpm install
-pnpm dev        # dev server at http://localhost:5173 (add --host to reach it from a phone on the LAN)
+pnpm dev        # dev server at http://localhost:5173 (needs .env — see below; add --host for a phone on the LAN)
 pnpm build      # tsc -b type-check + vite build into dist/ (also generates PWA icons)
 pnpm preview    # serve the production build
 pnpm lint       # oxlint
 pnpm lint:fix   # oxlint --fix
+pnpm typecheck  # tsc -b --noEmit
+pnpm knip       # unused files / exports / deps
+pnpm secretlint # scan for committed secrets
 pnpm format     # prettier --write .
 ```
 
 There is no test runner configured. Type-checking happens as part of `pnpm build` (`tsc -b`).
+
+`pnpm dev` needs a `.env` (`cp .env.example .env`) with `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_PUBLISHABLE_KEY`. One-time backend setup (Supabase, Resend, cron,
+Pages variables) is in `docs/supabase-setup.md`.
+
+## Workflow (hard rules)
+
+- **Never push or commit directly to `main`.** Every change lands via a branch →
+  pull request → merge. Do git work in a git **worktree** (not the main tree),
+  stage only the files you changed, and use **Conventional Commits**.
+- **Backpressure gates** (see `docs/backpressure.md`): lefthook runs prettier +
+  oxlint + secretlint on pre-commit and tsc + knip + build on pre-push; GitHub
+  Actions CI (`.github/workflows/ci.yml`) re-runs all of them; a Claude Code Stop
+  hook blocks finishing a turn while gates fail on changed files.
+- The Deno Edge Function under `supabase/**` is excluded from `knip` (it's a
+  separate runtime, not part of the app graph).
 
 ## Architecture
 
