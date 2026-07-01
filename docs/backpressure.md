@@ -14,19 +14,19 @@ which were added deliberately.
 
 ## Active gates
 
-| Where | Gate | Command (scoped) | Blocking? |
-|---|---|---|---|
-| **Stop hook** (agent) | format | `prettier --check` on changed files | yes (`exit 2`) |
-| | lint | `oxlint --deny-warnings` on changed `*.ts,*.tsx` | yes |
-| | typecheck | `tsc -b --noEmit` (whole-program, incremental) | yes |
-| | secrets | `secretlint` on changed files | yes |
-| **pre-commit** (lefthook) | format | `prettier --write` on staged (re-staged) | yes |
-| | lint | `oxlint --deny-warnings` on staged `*.ts,*.tsx` | yes |
-| | secrets | `secretlint` on staged | yes |
-| **pre-push** (lefthook) | typecheck | `tsc -b --noEmit` | yes |
-| | dead code | `knip --production --strict` | yes |
-| | build | `vite build` | yes |
-| **CI** (GitHub Actions) | all of the above on push/PR | see `.github/workflows/ci.yml` | yes |
+| Where                     | Gate                        | Command (scoped)                                 | Blocking?      |
+| ------------------------- | --------------------------- | ------------------------------------------------ | -------------- |
+| **Stop hook** (agent)     | format                      | `prettier --check` on changed files              | yes (`exit 2`) |
+|                           | lint                        | `oxlint --deny-warnings` on changed `*.ts,*.tsx` | yes            |
+|                           | typecheck                   | `tsc -b --noEmit` (whole-program, incremental)   | yes            |
+|                           | secrets                     | `secretlint` on changed files                    | yes            |
+| **pre-commit** (lefthook) | format                      | `prettier --write` on staged (re-staged)         | yes            |
+|                           | lint                        | `oxlint --deny-warnings` on staged `*.ts,*.tsx`  | yes            |
+|                           | secrets                     | `secretlint` on staged                           | yes            |
+| **pre-push** (lefthook)   | typecheck                   | `tsc -b --noEmit`                                | yes            |
+|                           | dead code                   | `knip --production --strict`                     | yes            |
+|                           | build                       | `vite build`                                     | yes            |
+| **CI** (GitHub Actions)   | all of the above on push/PR | see `.github/workflows/ci.yml`                   | yes            |
 
 `knip` runs whole-project by design (no changed-files mode) → pre-push / CI only, never
 pre-commit. `oxlint` has no cache (raw Rust) and no native changed flag, so the file list
