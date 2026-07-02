@@ -49,10 +49,15 @@ export function AuthGate({
 
 function SignIn() {
   const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [stage, setStage] = useState<'email' | 'code'>('email');
   const [state, setState] = useState<LinkState>('idle');
   const [message, setMessage] = useState('');
 
-  const sendLink = async (event: React.FormEvent) => {
+  // Email a one-time code (and a magic link). On phones the code is the reliable
+  // path: an installed iOS PWA can't receive the link's session from Safari, but
+  // typing the code signs you in right here.
+  const sendCode = async (event: React.FormEvent) => {
     event.preventDefault();
     setState('sending');
     setMessage('');
@@ -64,9 +69,26 @@ function SignIn() {
       setState('error');
       setMessage(error.message);
     } else {
-      setState('sent');
-      setMessage(`Check ${email} for your sign-in link.`);
+      setStage('code');
+      setState('idle');
+      setMessage(`We emailed a 6-digit code to ${email}.`);
     }
+  };
+
+  const verifyCode = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setState('sending');
+    setMessage('');
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: code.trim(),
+      type: 'email',
+    });
+    if (error) {
+      setState('error');
+      setMessage(error.message);
+    }
+    // On success, AuthGate's onAuthStateChange signs the user in.
   };
 
   return (
@@ -75,30 +97,76 @@ function SignIn() {
         <BellIcon size={26} />
         <span>SubTrack</span>
       </div>
-      <p className="settings-hint" style={{ textAlign: 'center' }}>
-        Sign in with a one-time email link — no password to remember.
-      </p>
-      <form onSubmit={sendLink} style={{ width: '100%', maxWidth: 320 }}>
-        <label className="field">
-          <span>Email</span>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            autoComplete="email"
-          />
-        </label>
-        <button
-          type="submit"
-          className="button button-primary button-block"
-          disabled={state === 'sending' || !email}
-        >
-          <MailIcon size={18} />
-          {state === 'sending' ? 'Sending…' : 'Email me a sign-in link'}
-        </button>
-      </form>
+
+      {stage === 'email' ? (
+        <>
+          <p className="settings-hint" style={{ textAlign: 'center' }}>
+            Sign in with a one-time email code — no password to remember.
+          </p>
+          <form onSubmit={sendCode} style={{ width: '100%', maxWidth: 320 }}>
+            <label className="field">
+              <span>Email</span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+            </label>
+            <button
+              type="submit"
+              className="button button-primary button-block"
+              disabled={state === 'sending' || !email}
+            >
+              <MailIcon size={18} />
+              {state === 'sending' ? 'Sending…' : 'Email me a code'}
+            </button>
+          </form>
+        </>
+      ) : (
+        <>
+          <p className="settings-hint" style={{ textAlign: 'center' }}>
+            Enter the 6-digit code from the email. On iPhone, typing the code
+            works in the installed app (the link often doesn't).
+          </p>
+          <form onSubmit={verifyCode} style={{ width: '100%', maxWidth: 320 }}>
+            <label className="field">
+              <span>6-digit code</span>
+              <input
+                type="text"
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="123456"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+              />
+            </label>
+            <button
+              type="submit"
+              className="button button-primary button-block"
+              disabled={state === 'sending' || code.trim().length < 6}
+            >
+              {state === 'sending' ? 'Verifying…' : 'Verify & sign in'}
+            </button>
+          </form>
+          <button
+            className="button button-ghost button-small"
+            onClick={() => {
+              setStage('email');
+              setCode('');
+              setState('idle');
+              setMessage('');
+            }}
+          >
+            Use a different email
+          </button>
+        </>
+      )}
+
       {message && (
         <p
           className={`email-status ${
