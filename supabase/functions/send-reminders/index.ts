@@ -168,9 +168,12 @@ function buildBody(lines: string[]): string {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Send one email via Resend, retrying the per-second rate limit (HTTP 429,
- * `over_email_send_rate_limit`). Honours a `Retry-After` header when present,
- * otherwise backs off ~0.6s, 1.2s, 1.8s. Other errors throw immediately.
+ * Send one email via Resend, retrying on HTTP 429 — Resend's own rate limit
+ * (`rate_limit_exceeded`; 5 req/sec on the free tier). Honours a `Retry-After`
+ * header when present, otherwise backs off ~0.6s, 1.2s, 1.8s. Other errors
+ * throw immediately. (Not to be confused with Supabase Auth's
+ * `over_email_send_rate_limit`, which throttles login emails — see
+ * docs/supabase-setup.md.)
  */
 async function sendEmail(to: string, subject: string, text: string) {
   for (let attempt = 0; ; attempt++) {
@@ -346,7 +349,7 @@ async function runAllUsers() {
     const offsets: number[] = row.reminder_offsets?.length
       ? row.reminder_offsets
       : [3, 0];
-    // Space out sends to stay under Resend's 2 req/sec limit across many users.
+    // Space out sends to stay well under Resend's rate limit (5 req/sec) across many users.
     if (!first) await sleep(600);
     first = false;
     try {
