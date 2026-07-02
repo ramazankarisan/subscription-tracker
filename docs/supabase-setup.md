@@ -22,7 +22,14 @@ never commit. You do the dashboard steps; the code is already in the repo.
 3. **SQL Editor** → paste and run [`supabase/schema.sql`](../supabase/schema.sql).
 4. **Authentication → Sign In / Providers → Email**: ensure it's enabled
    (it's on by default — magic link works out of the box). Note: the built-in
-   sender allows ~2 auth emails/hour; enough for personal use.
+   sender allows ~2 auth emails/hour; enough for personal use. If you request
+   sign-in links faster than that (e.g. while testing) Supabase Auth returns
+   `over_email_send_rate_limit` / "email rate limit exceeded" — this is the
+   **login** email, unrelated to Resend or the reminder quota. To lift it:
+   raise **Authentication → Rate Limits → "Rate limit for sending emails"**,
+   or (better) set **Authentication → Emails → SMTP Settings** to your own
+   Resend account — host `smtp.resend.com`, port `465`, user `resend`,
+   password = your `RESEND_API_KEY` — which raises the default to ~30/hour.
 5. **Authentication → URL Configuration**: add your site URL
    `https://ramazankarisan.github.io/subscription-tracker/` to **Site URL** and
    **Redirect URLs** (and `http://localhost:5173/` for local dev), so magic
