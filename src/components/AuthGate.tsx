@@ -128,21 +128,22 @@ function SignIn() {
       ) : (
         <>
           <p className="settings-hint" style={{ textAlign: 'center' }}>
-            Enter the 6-digit code from the email. On iPhone, typing the code
-            works in the installed app (the link often doesn't).
+            Enter the code from the email. On iPhone, typing the code works in
+            the installed app (the link often doesn't).
           </p>
           <form onSubmit={verifyCode} style={{ width: '100%', maxWidth: 320 }}>
             <label className="field">
-              <span>6-digit code</span>
+              <span>Code</span>
               <input
                 type="text"
                 required
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="123456"
+                // Keep only digits; Supabase OTP length is configurable (6–10).
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="Code from email"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                maxLength={6}
+                maxLength={10}
               />
             </label>
             <button
