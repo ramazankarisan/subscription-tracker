@@ -34,6 +34,12 @@ never commit. You do the dashboard steps; the code is already in the repo.
    `https://ramazankarisan.github.io/subscription-tracker/` to **Site URL** and
    **Redirect URLs** (and `http://localhost:5173/` for local dev), so magic
    links return to the app.
+6. **Authentication → Emails → Templates → "Magic Link"**: make sure the body
+   includes the 6-digit code token, e.g. add a line:
+   `Your code: {{ .Token }}`. The app signs you in by **code entry**, which is
+   the only reliable path in an installed iOS PWA (the tapped link opens in
+   Safari and can't hand its session to the standalone app). Keep
+   `{{ .ConfirmationURL }}` too so the link still works on desktop.
 
 ## 2. Resend (email)
 
