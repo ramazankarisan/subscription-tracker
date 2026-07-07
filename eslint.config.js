@@ -1,11 +1,4 @@
-// Single linter for the whole project. Replaces oxlint: ESLint is the only
-// linter that can enforce every rule we want in ONE pass — strict TypeScript,
-// React best practices, `curly`, AND no-abbreviation naming
-// (unicorn/name-replacements, which neither oxlint nor biome implements).
-//
-// Scoped to `src/`. The Deno `supabase/**` bundle is a separate runtime and is
-// excluded (like it is from knip). Copy-paste detection is a separate tool
-// (jscpd), not a lint rule.
+// Linter for src/: strict TypeScript, React, and no-abbreviation naming.
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import react from 'eslint-plugin-react';
@@ -63,7 +56,7 @@ export default tseslint.config(
         'error',
         {
           checkFilenames: false,
-          // Domain/React terms that are clearer abbreviated than expanded.
+          // Allowed abbreviations.
           allowList: {
             props: true,
             Props: true,

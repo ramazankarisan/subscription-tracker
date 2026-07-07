@@ -45,8 +45,7 @@ ESLint is the **single** linter (config: `eslint.config.js`, scoped to `src/`; t
 - **general** — `curly` (no braceless blocks), `eqeqeq`, `no-var`, `no-else-return`, …;
 - **no abbreviations** — `unicorn/name-replacements` flags over-abbreviated names
   (`prev`, `err`, `res`); domain/React terms (`props`, `ref`, `env`, `db`, `fn`, …) are
-  allow-listed. This rule exists **only** in ESLint's ecosystem — neither oxlint nor biome
-  implements it, which is why ESLint (not a faster Rust linter) is the choice here.
+  allow-listed.
 
 `--max-warnings 0` makes every warning blocking. `jscpd` is a copy-paste detector (not a
 lint rule): `.jscpd.json` sets a **ratchet threshold** (max duplication %) just above the

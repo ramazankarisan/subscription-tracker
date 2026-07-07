@@ -44,8 +44,7 @@ if ! out="$(printf '%s\n' "$CHANGED" | xargs prettier --check --cache --ignore-u
   failures="${failures}\n## format failed:\n${out}"
 fi
 
-# lint (changed src/*.ts,tsx only) — single ESLint pass: strict TS + React +
-# curly + no-abbreviation naming. Warnings are errors (--max-warnings 0).
+# lint (changed src/*.ts,tsx only — warnings are errors)
 SRC_TS_FILES="$(printf '%s\n' "$TS_FILES" | grep -E '^src/' || true)"
 if [ -n "$SRC_TS_FILES" ]; then
   if ! out="$(printf '%s\n' "$SRC_TS_FILES" | xargs eslint --max-warnings 0 --no-error-on-unmatched-pattern 2>&1)"; then
@@ -53,8 +52,7 @@ if [ -n "$SRC_TS_FILES" ]; then
   fi
 fi
 
-# duplication — whole-project (like typecheck/knip: a change can add a clone
-# anywhere). Cheap (Rust cpd, ~ms), ratchet threshold lives in .jscpd.json.
+# duplication — whole-project; threshold in .jscpd.json
 if printf '%s\n' "$TS_FILES" | grep -qE '^src/'; then
   if ! out="$(jscpd -c .jscpd.json src 2>&1)"; then
     failures="${failures}\n## duplication (jscpd) failed:\n${out}"
