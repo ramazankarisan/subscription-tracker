@@ -416,6 +416,31 @@
   color: var(--danger);
 }
 
+/* ---------- Sync error banner ---------- */
+.sync-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--danger);
+  background: var(--danger-soft);
+  border: 1px solid var(--danger);
+  border-radius: 10px;
+}
+
+.sync-error-dismiss {
+  margin-left: auto;
+  padding: 0 4px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--danger);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
 /* ---------- Tab bar ---------- */
 .tab-bar {
   position: fixed;

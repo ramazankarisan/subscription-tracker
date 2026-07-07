@@ -20,6 +20,13 @@ never commit. You do the dashboard steps; the code is already in the repo.
      `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` into
      Edge Functions, so the reminder function already has them.
 3. **SQL Editor** → paste and run [`supabase/schema.sql`](../supabase/schema.sql).
+   The file is **safe to re-run** end to end (every `create policy` is preceded
+   by `drop policy if exists`), so re-paste it any time to repair a project
+   whose policies drifted from this file.
+   - **Verify writes land**: after schema setup, sign in to the app, add a test
+     subscription, then open **Table Editor → `subscriptions`** and confirm the
+     row appears. If it does not, RLS write policies are missing — re-run
+     `schema.sql` (the step above) and try again.
 4. **Authentication → Sign In / Providers → Email**: ensure it's enabled
    (it's on by default — magic link works out of the box). Note: the built-in
    sender allows ~2 auth emails/hour; enough for personal use. If you request
@@ -104,12 +111,26 @@ The daily query also keeps the free project from idling.
   The deploy workflow bakes them into the build. (Then **Settings → Pages →
   Source: GitHub Actions** if not already set.)
 
+## 5b. Enable Realtime (live cross-device sync)
+
+Live sync needs the three user tables in the `supabase_realtime` publication.
+The `schema.sql` you ran in step 1.3 already does this (the Realtime block at the
+end), so **no extra action is needed if you ran the latest `schema.sql`**. To
+enable it on an existing project without a full re-run, paste just the
+publication block from [`supabase/schema.sql`](../supabase/schema.sql) into the
+**SQL Editor** — it's idempotent. (Alternatively, **Database → Replication →
+`supabase_realtime`** → toggle the three tables on.)
+
 ## 6. Verify
 
 1. `pnpm dev` → sign in with the magic link → add a subscription → confirm the
    row appears in Supabase **Table editor**.
 2. Open the app on a second device, sign in → same data (sync works).
-3. Settings → **Send test email** → check your inbox.
-4. Create an item due in 3 days and one due today; run the function manually
+3. **Live sync**: put two browser windows side by side, same account. Add /
+   renew / delete an item (or change a setting) in one → it appears in the
+   other within ~1 s, no focus change or reload. Then background one tab, edit
+   in the other, return to the first → it refetches on focus.
+4. Settings → **Send test email** → check your inbox.
+5. Create an item due in 3 days and one due today; run the function manually
    (`curl -H "Authorization: Bearer YOUR_CRON_SECRET" <function-url>`) → one
    email lists both; run again → no duplicate (idempotency).

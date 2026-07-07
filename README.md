@@ -6,8 +6,11 @@ and it **emails you a reminder before anything is due, even when the app is
 closed**.
 
 - **Sign in with a magic link** — passwordless email sign-in, no account to create.
-- **Your data syncs across devices** — stored per-user in Supabase (Postgres),
-  so your phone and laptop show the same thing.
+- **Your data syncs live across devices** — stored per-user in Supabase
+  (Postgres); an edit on your phone shows up on your laptop within seconds
+  (Supabase Realtime) or the moment that tab regains focus, no reload needed.
+  A write that can't reach the server surfaces a notice instead of silently
+  vanishing.
 - **Server-scheduled email reminders** — a daily job emails you at your chosen
   offsets (default **3 days before** and **on the due date**), sent from the
   server via [Resend](https://resend.com) so it works even when the app is shut.
