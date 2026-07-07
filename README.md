@@ -43,10 +43,9 @@ pnpm secretlint          # scan for committed secrets
 pnpm format              # prettier --write .
 ```
 
-You need a Supabase project + Resend account first — see the one-time setup guide
-below.
-
 ## Setup (one-time)
+
+You need a Supabase project + Resend account first.
 
 Full click-by-click instructions — Supabase project, database schema, Resend key,
 the reminder Edge Function, the daily cron, and GitHub Pages variables — are in

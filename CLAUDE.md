@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Commands
 
 Package manager is **pnpm**.
@@ -19,7 +17,7 @@ pnpm secretlint # scan for committed secrets
 pnpm format     # prettier --write .
 ```
 
-There is no test runner configured. Type-checking happens as part of `pnpm build` (`tsc -b`).
+There is no test runner configured.
 
 `pnpm dev` needs a `.env` (`cp .env.example .env`) with `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_PUBLISHABLE_KEY`. One-time backend setup (Supabase, Resend, cron,
