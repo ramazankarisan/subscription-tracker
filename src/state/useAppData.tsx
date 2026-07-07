@@ -78,7 +78,7 @@ interface AppDataContextValue {
 const AppDataContext = createContext<AppDataContextValue | null>(null);
 
 const SYNC_ERROR_MESSAGE =
-  "Couldn't save to the server — will resync when you're back online.";
+  "Couldn't save your last change to the server — check your connection and try again.";
 const REFETCH_DEBOUNCE_MS = 300;
 
 function newId(): string {
@@ -171,8 +171,15 @@ export function AppDataProvider({
       } finally {
         if (first) setLoading(false);
         fetchInFlightRef.current = false;
-        // Something asked to refetch while this fetch was running — do it now.
-        if (refetchQueuedRef.current && userIdRef.current === user.id) {
+        // Drain a queued refetch — but only if no write is now in flight.
+        // Otherwise leave it queued for persist()'s finally to run once writes
+        // settle: refetching mid-write would read pre-write server rows and
+        // revert the just-made optimistic edit.
+        if (
+          refetchQueuedRef.current &&
+          userIdRef.current === user.id &&
+          pendingWritesRef.current === 0
+        ) {
           refetchQueuedRef.current = false;
           void fetchAll(false);
         }
@@ -211,6 +218,9 @@ export function AppDataProvider({
           if (res && res.error) {
             setSyncError(SYNC_ERROR_MESSAGE);
             requestRefetch();
+          } else {
+            // A write got through — connectivity is back; clear any stale notice.
+            setSyncError(null);
           }
         } catch {
           setSyncError(SYNC_ERROR_MESSAGE);

@@ -66,7 +66,9 @@ export default function App() {
   return (
     <AuthGate>
       {(user) => (
-        <AppDataProvider user={user}>
+        // Key on user.id so switching accounts remounts the store with fresh
+        // state/refs instead of leaking the previous user's in-flight writes.
+        <AppDataProvider key={user.id} user={user}>
           <AppShell />
         </AppDataProvider>
       )}

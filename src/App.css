@@ -431,9 +431,15 @@
 }
 
 .sync-error-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-left: auto;
-  padding: 0 4px;
-  font-size: 18px;
+  min-width: 44px;
+  min-height: 44px;
+  margin-block: -12px;
+  padding: 0;
+  font-size: 20px;
   line-height: 1;
   color: var(--danger);
   background: none;
