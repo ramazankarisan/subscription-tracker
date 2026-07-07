@@ -51,6 +51,22 @@ if [ -n "$TS_FILES" ]; then
   fi
 fi
 
+# names — no-abbreviation check (changed src/*.ts,tsx only; eslint owns this rule)
+SRC_TS_FILES="$(printf '%s\n' "$TS_FILES" | grep -E '^src/' || true)"
+if [ -n "$SRC_TS_FILES" ]; then
+  if ! out="$(printf '%s\n' "$SRC_TS_FILES" | xargs eslint --no-error-on-unmatched-pattern 2>&1)"; then
+    failures="${failures}\n## names (abbreviations) failed:\n${out}"
+  fi
+fi
+
+# duplication — whole-project (like typecheck/knip: a change can add a clone
+# anywhere). Cheap (Rust cpd, ~ms), ratchet threshold lives in .jscpd.json.
+if printf '%s\n' "$TS_FILES" | grep -qE '^src/'; then
+  if ! out="$(jscpd -c .jscpd.json src 2>&1)"; then
+    failures="${failures}\n## duplication (jscpd) failed:\n${out}"
+  fi
+fi
+
 # typecheck (whole-program incremental — catches untouched importers of the change)
 if ! out="$(tsc -b --noEmit 2>&1)"; then
   failures="${failures}\n## typecheck failed:\n${out}"

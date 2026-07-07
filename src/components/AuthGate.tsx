@@ -41,9 +41,15 @@ export function AuthGate({
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  if (!isSupabaseConfigured) return <ConfigNeeded />;
-  if (!ready) return <Centered>Loading…</Centered>;
-  if (user) return <>{children(user)}</>;
+  if (!isSupabaseConfigured) {
+    return <ConfigNeeded />;
+  }
+  if (!ready) {
+    return <Centered>Loading…</Centered>;
+  }
+  if (user) {
+    return <>{children(user)}</>;
+  }
   return <SignIn />;
 }
 
@@ -110,7 +116,7 @@ function SignIn() {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@example.com"
                 autoComplete="email"
               />
@@ -139,7 +145,9 @@ function SignIn() {
                 required
                 value={code}
                 // Keep only digits; Supabase OTP length is configurable (6–10).
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                onChange={(event) =>
+                  setCode(event.target.value.replace(/\D/g, ''))
+                }
                 placeholder="Code from email"
                 inputMode="numeric"
                 autoComplete="one-time-code"

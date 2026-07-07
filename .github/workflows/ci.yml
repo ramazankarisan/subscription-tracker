@@ -26,6 +26,12 @@ jobs:
       - name: Lint (oxlint)
         run: pnpm exec oxlint --deny-warnings
 
+      - name: Names / no-abbreviations (eslint)
+        run: pnpm exec eslint .
+
+      - name: Duplication (jscpd)
+        run: pnpm exec jscpd -c .jscpd.json src
+
       - name: Format (prettier)
         run: pnpm exec prettier --check --cache --ignore-unknown .
 

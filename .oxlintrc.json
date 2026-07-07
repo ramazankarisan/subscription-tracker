@@ -1,8 +1,35 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
+  "ignorePatterns": ["supabase/**", "dist/**", "dev-dist/**"],
+  "plugins": ["react", "typescript", "unicorn", "import", "oxc"],
+  "categories": {
+    "correctness": "error"
+  },
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "react/jsx-key": "error",
+    "react/no-array-index-key": "warn",
+    "react/no-danger": "error",
+    "react/self-closing-comp": "error",
+    "react/jsx-no-useless-fragment": "error",
+
+    "typescript/no-explicit-any": "error",
+    "typescript/consistent-type-imports": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/array-type": ["error", { "default": "array-simple" }],
+    "typescript/prefer-ts-expect-error": "error",
+    "typescript/ban-ts-comment": "error",
+
+    "curly": ["error", "all"],
+    "eqeqeq": ["error", "always"],
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-else-return": "error",
+    "object-shorthand": "error",
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+
+    "unicorn/catch-error-name": "error",
+    "unicorn/prefer-node-protocol": "error"
   }
 }

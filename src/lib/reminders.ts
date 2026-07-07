@@ -52,7 +52,9 @@ export function getDueItems(data: AppData, leadDays: number): DueItem[] {
       installment.totalPayments,
       installment.intervalMonths,
     );
-    if (dueDate === null) continue;
+    if (dueDate === null) {
+      continue;
+    }
     const days = daysUntil(dueDate);
     if (days <= leadDays) {
       items.push({

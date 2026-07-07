@@ -13,7 +13,7 @@ import { MailIcon } from './icons';
 type TestState = 'idle' | 'sending' | 'sent' | 'error';
 
 /** Offsets the user can toggle; 0 = on the due date itself. */
-const OFFSET_CHOICES: { value: number; label: string }[] = [
+const OFFSET_CHOICES: Array<{ value: number; label: string }> = [
   { value: 0, label: 'On the day' },
   { value: 1, label: '1 day before' },
   { value: 3, label: '3 days before' },
@@ -68,7 +68,9 @@ export function SettingsView() {
 
   const handleImport = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       try {

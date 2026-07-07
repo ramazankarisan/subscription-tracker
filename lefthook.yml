@@ -15,6 +15,9 @@ pre-commit:
     lint:
       glob: '*.{ts,tsx}'
       run: node_modules/.bin/oxlint --deny-warnings {staged_files}
+    names:
+      glob: 'src/**/*.{ts,tsx}'
+      run: node_modules/.bin/eslint --no-error-on-unmatched-pattern {staged_files}
     secrets:
       glob: '*'
       run: node_modules/.bin/secretlint --secretlintignore .gitignore {staged_files}
@@ -26,5 +29,7 @@ pre-push:
       run: node_modules/.bin/tsc -b --noEmit
     knip:
       run: node_modules/.bin/knip --production --strict
+    dupes:
+      run: node_modules/.bin/jscpd -c .jscpd.json src
     build:
       run: node_modules/.bin/vite build

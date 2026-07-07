@@ -31,7 +31,9 @@ export function cacheKeyForUser(userId: string): string {
 export function loadData(key: string): AppData {
   try {
     const raw = localStorage.getItem(key);
-    if (!raw) return emptyData;
+    if (!raw) {
+      return emptyData;
+    }
     const parsed = JSON.parse(raw) as Partial<AppData>;
     return {
       subscriptions: Array.isArray(parsed.subscriptions)
