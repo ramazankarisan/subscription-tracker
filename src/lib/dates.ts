@@ -93,7 +93,9 @@ export function nextInstallmentDate(
   totalPayments: number,
   intervalMonths: number,
 ): string | null {
-  if (paidPayments >= totalPayments) return null;
+  if (paidPayments >= totalPayments) {
+    return null;
+  }
   const next = addMonths(
     parseISO(firstPaymentDate),
     paidPayments * Math.max(1, intervalMonths),
@@ -103,7 +105,9 @@ export function nextInstallmentDate(
 
 /** Human-friendly date, e.g. "1 Jul 2026", in the user's locale. */
 export function formatDate(iso: string): string {
-  if (!isValidIso(iso)) return '—';
+  if (!isValidIso(iso)) {
+    return '—';
+  }
   return parseISO(iso).toLocaleDateString(undefined, {
     day: 'numeric',
     month: 'short',
@@ -114,9 +118,17 @@ export function formatDate(iso: string): string {
 /** A short relative phrase: "Today", "Tomorrow", "in 5 days", "3 days ago". */
 export function relativeDayLabel(iso: string): string {
   const days = daysUntil(iso);
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Tomorrow';
-  if (days === -1) return 'Yesterday';
-  if (days > 1) return `in ${days} days`;
+  if (days === 0) {
+    return 'Today';
+  }
+  if (days === 1) {
+    return 'Tomorrow';
+  }
+  if (days === -1) {
+    return 'Yesterday';
+  }
+  if (days > 1) {
+    return `in ${days} days`;
+  }
   return `${Math.abs(days)} days ago`;
 }

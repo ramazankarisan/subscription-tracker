@@ -9,8 +9,9 @@ pnpm install
 pnpm dev        # dev server at http://localhost:5173 (needs .env — see below; add --host for a phone on the LAN)
 pnpm build      # tsc -b type-check + vite build into dist/ (also generates PWA icons)
 pnpm preview    # serve the production build
-pnpm lint       # oxlint
-pnpm lint:fix   # oxlint --fix
+pnpm lint       # eslint (strict TS + React + curly + no-abbreviations), warnings are errors
+pnpm lint:fix   # eslint --fix
+pnpm dupes      # jscpd copy-paste detector (ratchet threshold in .jscpd.json)
 pnpm typecheck  # tsc -b --noEmit
 pnpm knip       # unused files / exports / deps
 pnpm secretlint # scan for committed secrets
@@ -29,9 +30,10 @@ Pages variables) is in `docs/supabase-setup.md`.
   pull request → merge. Do git work in a git **worktree** (not the main tree),
   stage only the files you changed, and use **Conventional Commits**.
 - **Backpressure gates** (see `docs/backpressure.md`): lefthook runs prettier +
-  oxlint + secretlint on pre-commit and tsc + knip + build on pre-push; GitHub
-  Actions CI (`.github/workflows/ci.yml`) re-runs all of them; a Claude Code Stop
-  hook blocks finishing a turn while gates fail on changed files.
+  eslint + secretlint on pre-commit and tsc + knip + jscpd + build on pre-push;
+  GitHub Actions CI (`.github/workflows/ci.yml`) re-runs all of them; a Claude
+  Code Stop hook blocks finishing a turn while gates fail on changed files.
+  ESLint is the single linter (strict TS + React + `curly` + no-abbreviations).
 - The Deno Edge Function under `supabase/**` is excluded from `knip` (it's a
   separate runtime, not part of the app graph).
 - **Keep code comments short and simple** — one line where possible; explain

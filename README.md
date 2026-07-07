@@ -36,7 +36,8 @@ pnpm dev                 # http://localhost:5173
 pnpm build               # production build into dist/ (also generates PWA icons)
 pnpm preview             # serve the production build
 
-pnpm lint                # oxlint
+pnpm lint                # eslint (strict TS + React + curly + no-abbreviations)
+pnpm dupes               # jscpd copy-paste detector
 pnpm typecheck           # tsc -b --noEmit
 pnpm knip                # unused files/deps
 pnpm secretlint          # scan for committed secrets

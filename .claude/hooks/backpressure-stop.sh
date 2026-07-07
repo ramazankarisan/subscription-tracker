@@ -44,10 +44,18 @@ if ! out="$(printf '%s\n' "$CHANGED" | xargs prettier --check --cache --ignore-u
   failures="${failures}\n## format failed:\n${out}"
 fi
 
-# lint (changed .ts/.tsx only)
-if [ -n "$TS_FILES" ]; then
-  if ! out="$(printf '%s\n' "$TS_FILES" | xargs oxlint --deny-warnings 2>&1)"; then
+# lint (changed src/*.ts,tsx only — warnings are errors)
+SRC_TS_FILES="$(printf '%s\n' "$TS_FILES" | grep -E '^src/' || true)"
+if [ -n "$SRC_TS_FILES" ]; then
+  if ! out="$(printf '%s\n' "$SRC_TS_FILES" | xargs eslint --max-warnings 0 --no-error-on-unmatched-pattern 2>&1)"; then
     failures="${failures}\n## lint failed:\n${out}"
+  fi
+fi
+
+# duplication — whole-project; threshold in .jscpd.json
+if printf '%s\n' "$TS_FILES" | grep -qE '^src/'; then
+  if ! out="$(jscpd -c .jscpd.json src 2>&1)"; then
+    failures="${failures}\n## duplication (jscpd) failed:\n${out}"
   fi
 fi
 

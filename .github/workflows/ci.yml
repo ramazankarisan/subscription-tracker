@@ -23,8 +23,11 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Lint (oxlint)
-        run: pnpm exec oxlint --deny-warnings
+      - name: Lint (eslint)
+        run: pnpm exec eslint . --max-warnings 0
+
+      - name: Duplication (jscpd)
+        run: pnpm exec jscpd -c .jscpd.json src
 
       - name: Format (prettier)
         run: pnpm exec prettier --check --cache --ignore-unknown .
