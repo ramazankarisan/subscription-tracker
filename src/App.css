@@ -416,6 +416,37 @@
   color: var(--danger);
 }
 
+/* ---------- Sync error banner ---------- */
+.sync-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--danger);
+  background: var(--danger-soft);
+  border: 1px solid var(--danger);
+  border-radius: 10px;
+}
+
+.sync-error-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  min-width: 44px;
+  min-height: 44px;
+  margin-block: -12px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--danger);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
 /* ---------- Tab bar ---------- */
 .tab-bar {
   position: fixed;

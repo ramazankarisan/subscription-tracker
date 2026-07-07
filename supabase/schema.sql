@@ -67,16 +67,41 @@ alter table public.installments enable row level security;
 alter table public.app_settings enable row level security;
 alter table public.reminder_log enable row level security;
 
+-- `drop policy if exists` before each `create policy` keeps this file safe to
+-- re-run end to end (Postgres has no `create policy if not exists`, so a bare
+-- re-run would abort on the first duplicate).
+drop policy if exists "own subscriptions" on public.subscriptions;
 create policy "own subscriptions" on public.subscriptions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "own installments" on public.installments;
 create policy "own installments" on public.installments
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "own settings" on public.app_settings;
 create policy "own settings" on public.app_settings
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Clients may read their own send history; only the server (service role)
 -- writes to it, so no insert/update/delete policy is granted here.
+drop policy if exists "own reminder log" on public.reminder_log;
 create policy "own reminder log" on public.reminder_log
   for select using (auth.uid() = user_id);
+
+-- ---------- Realtime ----------
+-- Live cross-device sync: add the user-facing tables to the `supabase_realtime`
+-- publication so the app receives postgres_changes events. Idempotent — only
+-- adds a table that is not already published, so this is safe to re-run.
+do $$
+declare t text;
+begin
+  foreach t in array array['subscriptions', 'installments', 'app_settings'] loop
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime'
+        and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $$;

@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Commands
 
 Package manager is **pnpm**.
@@ -20,7 +18,7 @@ pnpm secretlint # scan for committed secrets
 pnpm format     # prettier --write .
 ```
 
-There is no test runner configured. Type-checking happens as part of `pnpm build` (`tsc -b`).
+There is no test runner configured.
 
 `pnpm dev` needs a `.env` (`cp .env.example .env`) with `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_PUBLISHABLE_KEY`. One-time backend setup (Supabase, Resend, cron,
@@ -38,6 +36,8 @@ Pages variables) is in `docs/supabase-setup.md`.
   ESLint is the single linter (strict TS + React + `curly` + no-abbreviations).
 - The Deno Edge Function under `supabase/**` is excluded from `knip` (it's a
   separate runtime, not part of the app graph).
+- **Keep code comments short and simple** — one line where possible; explain
+  the _why_, not the obvious.
 
 ## Architecture
 
@@ -47,7 +47,7 @@ A phone-first PWA (Vite + React 19 + TypeScript) for tracking subscription renew
 
 - `src/types.ts` — the domain model (`Subscription`, `Installment`, `AppData`, settings). Everything is plain JSON: **dates are stored as ISO day strings (`"yyyy-MM-dd"`), never `Date` objects.**
 - `src/lib/supabase.ts` — the Supabase browser client (URL + anon key from `VITE_SUPABASE_*` env). `src/components/AuthGate.tsx` gates the app behind a magic-link sign-in and passes the `AuthedUser` down.
-- `src/state/useAppData.tsx` — the single store, scoped to the signed-in user. Renders instantly from the localStorage cache, fetches the user's rows from Supabase, then applies every action **optimistically** to local state and writes it through to Supabase (insert/update/upsert/delete). Components call typed action helpers (`addSubscription`, `markSubscriptionRenewed`, …); **components never touch Supabase or localStorage directly.**
+- `src/state/useAppData.tsx` — the single store, scoped to the signed-in user. Renders instantly from the localStorage cache, fetches the user's rows from Supabase, then applies every action **optimistically** to local state and writes it through to Supabase (insert/update/upsert/delete). Components call typed action helpers (`addSubscription`, `markSubscriptionRenewed`, …); **components never touch Supabase or localStorage directly.** Devices stay converged live: a coalesced, debounced `requestRefetch()` re-reads the three tables on tab visibility/focus/reconnect and on Supabase **Realtime** `postgres_changes` events (per-user channel), deferring while optimistic writes are in flight. Every write goes through `persist()`; a write that fails to reach Supabase reverts to server truth (refetch) and surfaces a dismissible `syncError` banner (`AppShell`) instead of silently losing data.
 - `src/lib/mappers.ts` — converts between snake_case DB rows and camelCase domain objects (column names live only here).
 - `src/lib/storage.ts` — the per-user localStorage read cache (`cacheKeyForUser`). Loading is defensive: corruption / missing fields fall back to defaults.
 

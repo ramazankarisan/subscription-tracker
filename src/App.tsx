@@ -12,7 +12,8 @@ import { AppDataProvider, useAppData } from './state/useAppData';
 
 function AppShell() {
   const [tab, setTab] = useState<TabId>('dashboard');
-  const { settings, userEmail, signOut } = useAppData();
+  const { settings, userEmail, signOut, syncError, dismissSyncError } =
+    useAppData();
 
   return (
     <div className="app">
@@ -29,6 +30,19 @@ function AppShell() {
           Sign out
         </button>
       </header>
+
+      {syncError && (
+        <div className="sync-error-banner" role="alert">
+          <span>⚠ {syncError}</span>
+          <button
+            className="sync-error-dismiss"
+            onClick={dismissSyncError}
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <main className="app-main">
         {tab === 'dashboard' && (
@@ -52,7 +66,8 @@ export default function App() {
   return (
     <AuthGate>
       {(user) => (
-        <AppDataProvider user={user}>
+        // key: remount the store per user so refs don't leak across accounts.
+        <AppDataProvider key={user.id} user={user}>
           <AppShell />
         </AppDataProvider>
       )}
