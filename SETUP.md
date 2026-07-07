@@ -17,7 +17,7 @@ Legend: 🔓 public / safe to share · 🔒 secret — never commit.
 ## Quality gates (backpressure)
 
 - Installed automatically (`pnpm install` runs `lefthook install`). Pre-commit
-  runs prettier + oxlint + secretlint; pre-push runs typecheck + knip + build;
+  runs prettier + eslint + secretlint; pre-push runs typecheck + knip + jscpd + build;
   CI re-runs everything. Details + bypasses: `docs/backpressure.md`.
 
 ## Supabase — database + auth + daily cron

@@ -44,18 +44,12 @@ if ! out="$(printf '%s\n' "$CHANGED" | xargs prettier --check --cache --ignore-u
   failures="${failures}\n## format failed:\n${out}"
 fi
 
-# lint (changed .ts/.tsx only)
-if [ -n "$TS_FILES" ]; then
-  if ! out="$(printf '%s\n' "$TS_FILES" | xargs oxlint --deny-warnings 2>&1)"; then
-    failures="${failures}\n## lint failed:\n${out}"
-  fi
-fi
-
-# names — no-abbreviation check (changed src/*.ts,tsx only; eslint owns this rule)
+# lint (changed src/*.ts,tsx only) — single ESLint pass: strict TS + React +
+# curly + no-abbreviation naming. Warnings are errors (--max-warnings 0).
 SRC_TS_FILES="$(printf '%s\n' "$TS_FILES" | grep -E '^src/' || true)"
 if [ -n "$SRC_TS_FILES" ]; then
-  if ! out="$(printf '%s\n' "$SRC_TS_FILES" | xargs eslint --no-error-on-unmatched-pattern 2>&1)"; then
-    failures="${failures}\n## names (abbreviations) failed:\n${out}"
+  if ! out="$(printf '%s\n' "$SRC_TS_FILES" | xargs eslint --max-warnings 0 --no-error-on-unmatched-pattern 2>&1)"; then
+    failures="${failures}\n## lint failed:\n${out}"
   fi
 fi
 

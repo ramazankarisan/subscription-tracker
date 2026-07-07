@@ -387,7 +387,7 @@ export function AppDataProvider({
   );
 }
 
-// oxlint-disable-next-line react/only-export-components
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAppData(): AppDataContextValue {
   const context = useContext(AppDataContext);
   if (!context) {
