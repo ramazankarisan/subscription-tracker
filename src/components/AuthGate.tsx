@@ -77,7 +77,7 @@ function SignIn() {
     } else {
       setStage('code');
       setState('idle');
-      setMessage(`We emailed a 6-digit code to ${email}.`);
+      setMessage(`We emailed a sign-in code to ${email}.`);
     }
   };
 

@@ -20,6 +20,7 @@ import { CheckIcon, EditIcon, PlusIcon, TrashIcon, UndoIcon } from './icons';
 export function InstallmentsView({ leadDays }: { leadDays: number }) {
   const {
     installments,
+    loading,
     addInstallment,
     updateInstallment,
     deleteInstallment,
@@ -55,6 +56,29 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
     }
   };
 
+  // Soonest-due first; fully-paid plans (no next date) sink to the bottom.
+  const dueDateOf = (installment: Installment) =>
+    nextInstallmentDate(
+      installment.firstPaymentDate,
+      installment.paidPayments,
+      installment.totalPayments,
+      installment.intervalMonths,
+    );
+  const sorted = [...installments].sort((a, b) => {
+    const dateA = dueDateOf(a);
+    const dateB = dueDateOf(b);
+    if (dateA === null && dateB === null) {
+      return 0;
+    }
+    if (dateA === null) {
+      return 1;
+    }
+    if (dateB === null) {
+      return -1;
+    }
+    return daysUntil(dateA) - daysUntil(dateB);
+  });
+
   return (
     <section className="view">
       <div className="view-header">
@@ -64,13 +88,15 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
         </button>
       </div>
 
-      {installments.length === 0 ? (
+      {loading && installments.length === 0 ? (
+        <p className="empty-state">Loading your plans…</p>
+      ) : installments.length === 0 ? (
         <p className="empty-state">
           No installment plans yet. Add one to track how many payments are left.
         </p>
       ) : (
         <ul className="card-list">
-          {installments.map((installment) => {
+          {sorted.map((installment) => {
             const remaining =
               installment.totalPayments - installment.paidPayments;
             const isComplete = remaining <= 0;

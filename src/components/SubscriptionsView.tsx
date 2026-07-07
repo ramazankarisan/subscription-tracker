@@ -35,6 +35,7 @@ function cycleSuffix(subscription: Subscription): string {
 export function SubscriptionsView({ leadDays }: { leadDays: number }) {
   const {
     subscriptions,
+    loading,
     addSubscription,
     updateSubscription,
     deleteSubscription,
@@ -82,7 +83,9 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
         </button>
       </div>
 
-      {sorted.length === 0 ? (
+      {loading && sorted.length === 0 ? (
+        <p className="empty-state">Loading your subscriptions…</p>
+      ) : sorted.length === 0 ? (
         <p className="empty-state">
           No subscriptions yet. Add one to start tracking renewal dates.
         </p>
@@ -136,6 +139,7 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
                       target="_blank"
                       rel="noreferrer"
                       title="Open cancel page"
+                      aria-label={`Open cancel page for ${subscription.name}`}
                     >
                       <ExternalLinkIcon size={18} />
                     </a>

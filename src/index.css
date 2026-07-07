@@ -4,7 +4,7 @@
   --surface: #ffffff;
   --surface-2: #f1f0f6;
   --text: #1c1a24;
-  --text-muted: #6b6375;
+  --text-muted: #58515f;
   --border: #e5e3ec;
   --accent: #7c3aed;
   --accent-strong: #6d28d9;
@@ -92,4 +92,23 @@ code {
   background: var(--surface-2);
   padding: 1px 5px;
   border-radius: 5px;
+}
+
+/* Consistent, visible keyboard focus across every interactive element. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Honor reduced-motion: collapse every transition/animation to near-instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
