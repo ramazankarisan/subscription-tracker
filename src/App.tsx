@@ -66,8 +66,7 @@ export default function App() {
   return (
     <AuthGate>
       {(user) => (
-        // Key on user.id so switching accounts remounts the store with fresh
-        // state/refs instead of leaking the previous user's in-flight writes.
+        // key: remount the store per user so refs don't leak across accounts.
         <AppDataProvider key={user.id} user={user}>
           <AppShell />
         </AppDataProvider>

@@ -4,12 +4,9 @@
  * Persistence now lives in Supabase (per authenticated user). The provider:
  *   1. renders instantly from a localStorage cache (offline-friendly),
  *   2. fetches the user's rows from Supabase and replaces the cache,
- *   3. applies every action optimistically to local state, then writes it
- *      through to Supabase (insert / update / upsert / delete),
- *   4. keeps devices converged live: a coalesced `requestRefetch()` re-reads
- *      the three tables on visibility/focus/reconnect and on Supabase Realtime
- *      `postgres_changes` events, deferring while writes are in flight; a write
- *      that fails to reach Supabase reverts (refetch) and surfaces `syncError`.
+ *   3. applies every action optimistically, then writes it through to Supabase,
+ *   4. stays converged live via a coalesced `requestRefetch()` (visibility /
+ *      focus / reconnect / Realtime); a failed write reverts and sets `syncError`.
  *
  * Components read the current data and call the typed action helpers — they
  * never touch Supabase or localStorage directly.
@@ -102,8 +99,7 @@ export function AppDataProvider({
   const dataRef = useRef(data);
   dataRef.current = data;
 
-  // Latest user id, so an in-flight fetch started for a previous user never
-  // applies its result after an account switch.
+  // Guards against a stale fetch applying after a user change.
   const userIdRef = useRef(user.id);
   userIdRef.current = user.id;
 
@@ -125,10 +121,8 @@ export function AppDataProvider({
     [cacheKey],
   );
 
-  // The 3-table load, reused by the initial mount and every live trigger.
-  // Only the first call flips `loading`; refetches leave it untouched so the
-  // UI never flashes back to a loading state. On any fetch error the cached
-  // data is kept rather than wiping the UI.
+  // Reads all three tables. Only the first call flips `loading`; on error we
+  // keep the cached data.
   const fetchAll = useCallback(
     async (first: boolean) => {
       fetchInFlightRef.current = true;
@@ -171,10 +165,8 @@ export function AppDataProvider({
       } finally {
         if (first) setLoading(false);
         fetchInFlightRef.current = false;
-        // Drain a queued refetch — but only if no write is now in flight.
-        // Otherwise leave it queued for persist()'s finally to run once writes
-        // settle: refetching mid-write would read pre-write server rows and
-        // revert the just-made optimistic edit.
+        // Drain a queued refetch, unless a write is in flight — then leave it
+        // for persist() so we don't refetch pre-write rows.
         if (
           refetchQueuedRef.current &&
           userIdRef.current === user.id &&
@@ -188,8 +180,7 @@ export function AppDataProvider({
     [user.id, user.email, cacheKey],
   );
 
-  // Run a refetch now unless a write is in flight or a fetch is already
-  // running — in which case queue it to run when the blocker clears.
+  // Refetch now, or queue it if a write or fetch is in flight.
   const maybeRefetch = useCallback(() => {
     if (pendingWritesRef.current > 0 || fetchInFlightRef.current) {
       refetchQueuedRef.current = true;
@@ -207,8 +198,7 @@ export function AppDataProvider({
     }, REFETCH_DEBOUNCE_MS);
   }, [maybeRefetch]);
 
-  // Wrap every Supabase write: count it as in flight (so refetches defer),
-  // and on failure revert to server truth (refetch) and surface a banner.
+  // Wrap every write: count it in flight; on failure refetch + show banner.
   const persist = useCallback(
     (run: () => PromiseLike<{ error: unknown }>) => {
       pendingWritesRef.current += 1;
@@ -219,8 +209,7 @@ export function AppDataProvider({
             setSyncError(SYNC_ERROR_MESSAGE);
             requestRefetch();
           } else {
-            // A write got through — connectivity is back; clear any stale notice.
-            setSyncError(null);
+            setSyncError(null); // write succeeded — clear any stale notice
           }
         } catch {
           setSyncError(SYNC_ERROR_MESSAGE);
@@ -243,15 +232,13 @@ export function AppDataProvider({
 
   const dismissSyncError = useCallback(() => setSyncError(null), []);
 
-  // Initial load. `fetchAll` changes identity when user.id/email/cacheKey
-  // change, so this re-runs the first load for a newly signed-in user.
+  // Initial load.
   useEffect(() => {
     setLoading(true);
     void fetchAll(true);
   }, [fetchAll]);
 
-  // Reset per-user sync state and clear any pending debounce on unmount or
-  // before the user changes, so a stale timer never fires for a past user.
+  // Clear pending debounce + reset sync state on unmount / user change.
   useEffect(() => {
     return () => {
       if (debounceRef.current) {
@@ -264,9 +251,8 @@ export function AppDataProvider({
     };
   }, [user.id]);
 
-  // Refetch when the tab/app becomes visible again, regains focus, or the
-  // network comes back — covers the backgrounded-PWA case Realtime can't
-  // (iOS suspends the page and the websocket silently drops).
+  // Refetch on tab visible / focus / reconnect — covers the backgrounded-PWA
+  // case Realtime misses (iOS suspends the page, socket drops).
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === 'visible') requestRefetch();
@@ -283,13 +269,9 @@ export function AppDataProvider({
     };
   }, [requestRefetch]);
 
-  // Supabase Realtime: one per-user channel funnelling every change on the
-  // three tables into the coalesced refetch, so two visible screens update
-  // each other within ~1s. INSERT/UPDATE are user-filtered; DELETE cannot be
-  // filtered (the payload carries only the old row's PK and RLS is not applied
-  // to DELETE), so its binding is unfiltered — harmless, since the handler only
-  // triggers an RLS-guarded refetch. Re-subscribing catches up events missed
-  // while the socket was down.
+  // Realtime: one per-user channel; every change refetches. INSERT/UPDATE are
+  // user-filtered; DELETE can't be (Supabase limitation), so it's unfiltered —
+  // fine, the refetch is RLS-guarded. Refetch on SUBSCRIBED to catch up misses.
   useEffect(() => {
     const channel = supabase.channel(`appdata:${user.id}`);
     const tables = ['subscriptions', 'installments', 'app_settings'] as const;
@@ -475,9 +457,8 @@ export function AppDataProvider({
     [apply, persist, user.id],
   );
 
-  // Import/restore: replace everything for this user, server-side too. The
-  // whole block is one persist unit — all five calls must settle before the
-  // pending-write counter drops so a refetch can't interleave mid-replace.
+  // Import/restore: replace everything for this user. One persist unit so all
+  // five calls settle before a refetch can interleave.
   const replaceData = useCallback(
     (incoming: AppData) => {
       const next: AppData = {

@@ -36,6 +36,8 @@ Pages variables) is in `docs/supabase-setup.md`.
   hook blocks finishing a turn while gates fail on changed files.
 - The Deno Edge Function under `supabase/**` is excluded from `knip` (it's a
   separate runtime, not part of the app graph).
+- **Keep code comments short and simple** — one line where possible; explain
+  the _why_, not the obvious.
 
 ## Architecture
 
