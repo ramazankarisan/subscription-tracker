@@ -36,6 +36,11 @@ dev-dist
 # Claude Code local worktrees (never commit)
 .claude/worktrees/
 
+# Vendored local skills — personal tooling, not app code (never commit)
+.claude/skills/impeccable/
+.github/skills/
+.github/hooks/
+
 # Supabase CLI local state
 supabase/.temp/
 supabase/.branches/
