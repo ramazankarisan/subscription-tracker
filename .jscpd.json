@@ -1,0 +1,7 @@
+{
+  "minTokens": 50,
+  "threshold": 3,
+  "format": ["typescript", "tsx"],
+  "ignore": ["supabase/**", "dist/**", "dev-dist/**", "**/*.config.*"],
+  "reporters": ["console", "threshold"]
+}

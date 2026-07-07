@@ -7,7 +7,7 @@ import { useState, type FormEvent } from 'react';
 import { todayIso } from '../lib/dates';
 import type { BillingCycle, Subscription } from '../types';
 
-const CYCLE_OPTIONS: { value: BillingCycle; label: string }[] = [
+const CYCLE_OPTIONS: Array<{ value: BillingCycle; label: string }> = [
   { value: 'weekly', label: 'Weekly' },
   { value: 'monthly', label: 'Monthly' },
   { value: 'quarterly', label: 'Quarterly' },

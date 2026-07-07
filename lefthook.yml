@@ -13,8 +13,8 @@ pre-commit:
       run: node_modules/.bin/prettier --write --cache --ignore-unknown {staged_files}
       stage_fixed: true
     lint:
-      glob: '*.{ts,tsx}'
-      run: node_modules/.bin/oxlint --deny-warnings {staged_files}
+      glob: 'src/**/*.{ts,tsx}'
+      run: node_modules/.bin/eslint --max-warnings 0 --no-error-on-unmatched-pattern {staged_files}
     secrets:
       glob: '*'
       run: node_modules/.bin/secretlint --secretlintignore .gitignore {staged_files}
@@ -26,5 +26,7 @@ pre-push:
       run: node_modules/.bin/tsc -b --noEmit
     knip:
       run: node_modules/.bin/knip --production --strict
+    dupes:
+      run: node_modules/.bin/jscpd -c .jscpd.json src
     build:
       run: node_modules/.bin/vite build

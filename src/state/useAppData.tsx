@@ -92,9 +92,9 @@ export function AppDataProvider({
 
   // Update local state (optimistic) and mirror to the offline cache.
   const apply = useCallback(
-    (updater: (prev: AppData) => AppData) => {
-      setData((prev) => {
-        const next = updater(prev);
+    (updater: (previous: AppData) => AppData) => {
+      setData((previous) => {
+        const next = updater(previous);
         saveData(cacheKey, next);
         return next;
       });
@@ -108,7 +108,7 @@ export function AppDataProvider({
 
     async function load() {
       setLoading(true);
-      const [subs, insts, settingsRes] = await Promise.all([
+      const [subs, insts, settingsResponse] = await Promise.all([
         supabase.from('subscriptions').select('*').eq('user_id', user.id),
         supabase.from('installments').select('*').eq('user_id', user.id),
         supabase
@@ -117,17 +117,19 @@ export function AppDataProvider({
           .eq('user_id', user.id)
           .maybeSingle(),
       ]);
-      if (cancelled) return;
+      if (cancelled) {
+        return;
+      }
 
       // On any fetch error, keep the cached data rather than wiping the UI.
-      if (subs.error || insts.error || settingsRes.error) {
+      if (subs.error || insts.error || settingsResponse.error) {
         setLoading(false);
         return;
       }
 
       let settings: AppSettings;
-      if (settingsRes.data) {
-        settings = rowToSettings(settingsRes.data as SettingsRow);
+      if (settingsResponse.data) {
+        settings = rowToSettings(settingsResponse.data as SettingsRow);
       } else {
         // First sign-in: create a settings row defaulting reminders to my inbox.
         settings = { ...emptyData.settings, recipientEmail: user.email };
@@ -155,9 +157,9 @@ export function AppDataProvider({
   const addSubscription = useCallback(
     (input: Omit<Subscription, 'id'>) => {
       const sub: Subscription = { ...input, id: newId() };
-      apply((prev) => ({
-        ...prev,
-        subscriptions: [...prev.subscriptions, sub],
+      apply((previous) => ({
+        ...previous,
+        subscriptions: [...previous.subscriptions, sub],
       }));
       void supabase
         .from('subscriptions')
@@ -168,9 +170,9 @@ export function AppDataProvider({
 
   const updateSubscription = useCallback(
     (id: string, patch: Partial<Subscription>) => {
-      apply((prev) => ({
-        ...prev,
-        subscriptions: prev.subscriptions.map((item) =>
+      apply((previous) => ({
+        ...previous,
+        subscriptions: previous.subscriptions.map((item) =>
           item.id === id ? { ...item, ...patch } : item,
         ),
       }));
@@ -187,9 +189,9 @@ export function AppDataProvider({
 
   const deleteSubscription = useCallback(
     (id: string) => {
-      apply((prev) => ({
-        ...prev,
-        subscriptions: prev.subscriptions.filter((item) => item.id !== id),
+      apply((previous) => ({
+        ...previous,
+        subscriptions: previous.subscriptions.filter((item) => item.id !== id),
       }));
       void supabase.from('subscriptions').delete().eq('id', id);
     },
@@ -199,7 +201,9 @@ export function AppDataProvider({
   const markSubscriptionRenewed = useCallback(
     (id: string) => {
       const current = dataRef.current.subscriptions.find((s) => s.id === id);
-      if (!current) return;
+      if (!current) {
+        return;
+      }
       // The current renewal happened: advance one cycle, then skip any further
       // cycles already in the past.
       const advanced = advanceByCycle(
@@ -220,9 +224,9 @@ export function AppDataProvider({
   const addInstallment = useCallback(
     (input: Omit<Installment, 'id'>) => {
       const inst: Installment = { ...input, id: newId() };
-      apply((prev) => ({
-        ...prev,
-        installments: [...prev.installments, inst],
+      apply((previous) => ({
+        ...previous,
+        installments: [...previous.installments, inst],
       }));
       void supabase
         .from('installments')
@@ -233,9 +237,9 @@ export function AppDataProvider({
 
   const updateInstallment = useCallback(
     (id: string, patch: Partial<Installment>) => {
-      apply((prev) => ({
-        ...prev,
-        installments: prev.installments.map((item) =>
+      apply((previous) => ({
+        ...previous,
+        installments: previous.installments.map((item) =>
           item.id === id ? { ...item, ...patch } : item,
         ),
       }));
@@ -252,9 +256,9 @@ export function AppDataProvider({
 
   const deleteInstallment = useCallback(
     (id: string) => {
-      apply((prev) => ({
-        ...prev,
-        installments: prev.installments.filter((item) => item.id !== id),
+      apply((previous) => ({
+        ...previous,
+        installments: previous.installments.filter((item) => item.id !== id),
       }));
       void supabase.from('installments').delete().eq('id', id);
     },
@@ -264,7 +268,9 @@ export function AppDataProvider({
   const markInstallmentPaid = useCallback(
     (id: string) => {
       const current = dataRef.current.installments.find((i) => i.id === id);
-      if (!current) return;
+      if (!current) {
+        return;
+      }
       updateInstallment(id, {
         paidPayments: Math.min(current.totalPayments, current.paidPayments + 1),
       });
@@ -275,7 +281,9 @@ export function AppDataProvider({
   const markInstallmentUnpaid = useCallback(
     (id: string) => {
       const current = dataRef.current.installments.find((i) => i.id === id);
-      if (!current) return;
+      if (!current) {
+        return;
+      }
       updateInstallment(id, {
         paidPayments: Math.max(0, current.paidPayments - 1),
       });
@@ -286,7 +294,7 @@ export function AppDataProvider({
   const updateSettings = useCallback(
     (patch: Partial<AppSettings>) => {
       const next = { ...dataRef.current.settings, ...patch };
-      apply((prev) => ({ ...prev, settings: next }));
+      apply((previous) => ({ ...previous, settings: next }));
       void supabase.from('app_settings').upsert(settingsToRow(next, user.id));
     },
     [apply, user.id],
