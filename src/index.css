@@ -15,6 +15,8 @@
   --warn-soft: rgba(217, 119, 6, 0.16);
   --danger: #dc2626;
   --danger-soft: rgba(220, 38, 38, 0.14);
+  /* Text on a filled accent/danger surface (buttons, active chip). */
+  --on-accent: #ffffff;
   /* Status text — darker than the pill hues to clear WCAG AA 4.5:1 on the
      soft tints and the body bg. Also used for pill labels. */
   --ok-text: #166534;
@@ -32,6 +34,12 @@
   --space-lg: 16px;
   --space-xl: 18px;
   --space-2xl: 24px;
+
+  /* Semantic stacking order: sticky header < bottom nav < modal. */
+  --z-sticky: 10;
+  --z-nav: 20;
+  --z-modal: 100;
+
   --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   color-scheme: light dark;
@@ -59,6 +67,8 @@
     --warn-soft: rgba(251, 191, 36, 0.16);
     --danger: #f87171;
     --danger-soft: rgba(248, 113, 113, 0.16);
+    /* The accent/danger fills lighten in dark mode, so ink beats white. */
+    --on-accent: #1a1822;
     /* Already high-contrast on the near-black bg; keep the bright hues. */
     --ok-text: #4ade80;
     --warn-text: #fbbf24;
@@ -109,4 +119,16 @@ code {
   background: var(--surface-2);
   padding: 1px 5px;
   border-radius: 5px;
+}
+
+/* Honour reduced-motion: neutralise the progress fill + all transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -40,6 +40,13 @@
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+.field input::placeholder,
+.field textarea::placeholder {
+  /* Muted, but held to the 4.5:1 floor — not the faint browser default. */
+  color: var(--text-muted);
+  opacity: 1;
+}
+
 .field textarea {
   resize: vertical;
 }
