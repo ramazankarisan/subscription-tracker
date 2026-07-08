@@ -1,7 +1,8 @@
 /**
- * Landing view: at-a-glance totals plus a "due soon" list, and a button to
- * email the reminder on demand. This is what surfaces the "don't forget"
- * information the moment the app is opened.
+ * Landing view: a distilled at-a-glance summary plus a "due soon & overdue"
+ * list, and an unobtrusive test-email action. First-time users (no data yet)
+ * see a first-run panel with a clear next step instead of a false "all caught
+ * up". This is what surfaces the "don't forget" information on open.
  */
 import { useState } from 'react';
 
@@ -11,7 +12,8 @@ import { getDueItems, type DueItem } from '../lib/reminders';
 import { supabase } from '../lib/supabase';
 import { useAppData } from '../state/useAppData';
 import type { Subscription } from '../types';
-import { BellIcon, CardIcon, InstallmentsIcon, MailIcon } from './icons';
+import type { TabId } from './TabBar';
+import { CardIcon, InstallmentsIcon, MailIcon } from './icons';
 import styles from './Dashboard.module.css';
 
 /** Convert any billing cycle to an approximate monthly cost. */
@@ -37,9 +39,9 @@ function monthlyEquivalent(subscription: Subscription): number {
 type SendState = 'idle' | 'sending' | 'sent' | 'error';
 
 export function Dashboard({
-  onNavigateToSettings,
+  onNavigate,
 }: {
-  onNavigateToSettings: () => void;
+  onNavigate: (tab: TabId) => void;
 }) {
   const { data, subscriptions, installments, settings } = useAppData();
   const leadDays = settings.reminderLeadDays;
@@ -47,6 +49,7 @@ export function Dashboard({
   const [sendState, setSendState] = useState<SendState>('idle');
   const [sendError, setSendError] = useState('');
 
+  const hasData = subscriptions.length > 0 || installments.length > 0;
   const dueItems = getDueItems(data, leadDays);
 
   // Totals are summed numerically; the label uses the first item's currency.
@@ -86,59 +89,71 @@ export function Dashboard({
     }
   };
 
+  if (!hasData) {
+    return (
+      <section className="view">
+        <div className="view-header">
+          <h1>Home</h1>
+        </div>
+        <div className={styles.firstRun}>
+          <h2>Track what's about to charge you</h2>
+          <p>
+            Add a subscription or an installment plan and SubTrack tells you
+            before each one is due — by email too, even when the app is closed.
+          </p>
+          <div className={styles.firstRunActions}>
+            <button
+              className="button button-primary"
+              onClick={() => onNavigate('subscriptions')}
+            >
+              <CardIcon size={18} /> Add a subscription
+            </button>
+            <button
+              className="button button-ghost"
+              onClick={() => onNavigate('installments')}
+            >
+              <InstallmentsIcon size={18} /> Add a plan
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="view">
       <div className="view-header">
-        <h1>Overview</h1>
+        <h1>Home</h1>
       </div>
 
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}>
-            <CardIcon size={20} />
-          </div>
+      <div className={styles.summary}>
+        <div className={styles.summaryStat}>
           <span className={styles.statValue}>
             {formatCurrency(monthlySpend, primaryCurrency)}
           </span>
-          <span className={styles.statLabel}>per month</span>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}>
-            <CardIcon size={20} />
-          </div>
-          <span className={styles.statValue}>{subscriptions.length}</span>
           <span className={styles.statLabel}>
-            subscription{subscriptions.length === 1 ? '' : 's'}
+            per month · {subscriptions.length} subscription
+            {subscriptions.length === 1 ? '' : 's'}
           </span>
         </div>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}>
-            <InstallmentsIcon size={20} />
-          </div>
+        <div className={styles.summaryStat}>
           <span className={styles.statValue}>
             {formatCurrency(remainingDebt, primaryCurrency)}
           </span>
-          <span className={styles.statLabel}>left to pay</span>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}>
-            <InstallmentsIcon size={20} />
-          </div>
-          <span className={styles.statValue}>{activeInstallments.length}</span>
           <span className={styles.statLabel}>
-            active plan{activeInstallments.length === 1 ? '' : 's'}
+            left to pay · {activeInstallments.length} plan
+            {activeInstallments.length === 1 ? '' : 's'}
           </span>
         </div>
       </div>
 
       <div className={styles.sectionHeading}>
-        <BellIcon size={18} />
-        <h2>Due within {leadDays} days</h2>
+        <h2>Due soon &amp; overdue</h2>
       </div>
 
       {dueItems.length === 0 ? (
         <p className="empty-state">
-          Nothing due soon. You're all caught up. ✅
+          Nothing due in the next {leadDays} days. You're all caught up.
         </p>
       ) : (
         <ul className={styles.dueList}>
@@ -149,36 +164,35 @@ export function Dashboard({
       )}
 
       <div className="email-box">
-        {emailReady ? (
+        {!emailReady ? (
+          <button
+            className="button button-ghost button-block"
+            onClick={() => onNavigate('settings')}
+          >
+            <MailIcon size={18} /> Set up email reminders
+          </button>
+        ) : sendState === 'sent' ? (
+          <p className="email-status email-status-ok">
+            Test email sent to {settings.recipientEmail}. Reminders are on.
+          </p>
+        ) : (
           <>
             <p className="settings-hint">
               Reminders are emailed to {settings.recipientEmail} automatically.
-              Send yourself one now to check it works:
+              Send one now to check it works:
             </p>
             <button
-              className="button button-primary button-block"
+              className="button button-ghost button-block"
               onClick={handleSendNow}
               disabled={sendState === 'sending'}
             >
               <MailIcon size={18} />
               {sendState === 'sending' ? 'Sending…' : 'Send me a test email'}
             </button>
-            {sendState === 'sent' && (
-              <p className="email-status email-status-ok">
-                Sent to {settings.recipientEmail}.
-              </p>
-            )}
             {sendState === 'error' && (
               <p className="email-status email-status-error">{sendError}</p>
             )}
           </>
-        ) : (
-          <button
-            className="button button-ghost button-block"
-            onClick={onNavigateToSettings}
-          >
-            <MailIcon size={18} /> Set up email reminders
-          </button>
         )}
       </div>
     </section>

@@ -45,9 +45,7 @@ function AppShell() {
       )}
 
       <main className={styles.main}>
-        {tab === 'dashboard' && (
-          <Dashboard onNavigateToSettings={() => setTab('settings')} />
-        )}
+        {tab === 'dashboard' && <Dashboard onNavigate={setTab} />}
         {tab === 'subscriptions' && (
           <SubscriptionsView leadDays={settings.reminderLeadDays} />
         )}
