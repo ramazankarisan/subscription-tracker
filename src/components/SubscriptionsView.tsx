@@ -170,6 +170,7 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
           title={editing ? 'Edit subscription' : 'Add subscription'}
           onClose={closeForm}
           closeOnBackdrop={false}
+          initialFocus="first-field"
         >
           <SubscriptionForm
             initial={editing ?? undefined}

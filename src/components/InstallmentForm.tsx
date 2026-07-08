@@ -23,7 +23,6 @@ export function InstallmentForm({
   const [amountPerPayment, setAmountPerPayment] = useState(
     initial ? String(initial.amountPerPayment) : '',
   );
-  const [currency, setCurrency] = useState(initial?.currency ?? 'EUR');
   const [totalPayments, setTotalPayments] = useState(
     initial ? String(initial.totalPayments) : '12',
   );
@@ -52,7 +51,7 @@ export function InstallmentForm({
     onSubmit({
       name: name.trim(),
       amountPerPayment: Number(amountPerPayment) || 0,
-      currency: currency.trim().toUpperCase() || 'EUR',
+      currency: 'EUR',
       totalPayments: totalValue,
       paidPayments: paidValue,
       firstPaymentDate,
@@ -71,35 +70,22 @@ export function InstallmentForm({
           onChange={(event) => setName(event.target.value)}
           placeholder="New phone"
           required
-          autoFocus
         />
       </label>
 
-      <div className="field-row">
-        <label className="field">
-          <span>Amount per payment</span>
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min="0"
-            value={amountPerPayment}
-            onChange={(event) => setAmountPerPayment(event.target.value)}
-            placeholder="49.99"
-            required
-          />
-        </label>
-        <label className="field field-narrow">
-          <span>Currency</span>
-          <input
-            type="text"
-            value={currency}
-            onChange={(event) => setCurrency(event.target.value)}
-            placeholder="EUR"
-            maxLength={3}
-          />
-        </label>
-      </div>
+      <label className="field">
+        <span>Amount per payment (€)</span>
+        <input
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          min="0"
+          value={amountPerPayment}
+          onChange={(event) => setAmountPerPayment(event.target.value)}
+          placeholder="49.99"
+          required
+        />
+      </label>
 
       <div className="field-row">
         <label className="field">
@@ -150,7 +136,7 @@ export function InstallmentForm({
 
       {grandTotal > 0 && (
         <p className="form-hint">
-          Total plan value: {formatCurrency(grandTotal, currency)}
+          Total plan value: {formatCurrency(grandTotal, 'EUR')}
         </p>
       )}
 
