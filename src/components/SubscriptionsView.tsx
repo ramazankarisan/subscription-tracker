@@ -169,6 +169,7 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
         <Modal
           title={editing ? 'Edit subscription' : 'Add subscription'}
           onClose={closeForm}
+          closeOnBackdrop={false}
         >
           <SubscriptionForm
             initial={editing ?? undefined}

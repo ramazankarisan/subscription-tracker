@@ -199,6 +199,7 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
         <Modal
           title={editing ? 'Edit installment' : 'Add installment'}
           onClose={closeForm}
+          closeOnBackdrop={false}
         >
           <InstallmentForm
             initial={editing ?? undefined}
