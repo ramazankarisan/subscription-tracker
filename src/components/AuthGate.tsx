@@ -8,9 +8,10 @@
  */
 import { useEffect, useState, type ReactNode } from 'react';
 
+import { passkeysSupported, signInWithPasskey } from '../lib/passkeys';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import type { AuthedUser } from '../state/useAppData';
-import { BellIcon, MailIcon } from './icons';
+import { BellIcon, FingerprintIcon, MailIcon } from './icons';
 
 type LinkState = 'idle' | 'sending' | 'error';
 
@@ -59,6 +60,21 @@ function SignIn() {
   const [stage, setStage] = useState<'email' | 'code'>('email');
   const [state, setState] = useState<LinkState>('idle');
   const [message, setMessage] = useState('');
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
+
+  // Biometric sign-in. On success AuthGate's onAuthStateChange takes over; a
+  // dismissed prompt stays silent, any real failure points back to the code.
+  const signInPasskey = async () => {
+    setPasskeyBusy(true);
+    setMessage('');
+    setState('idle');
+    const result = await signInWithPasskey();
+    setPasskeyBusy(false);
+    if (!result.ok && !result.cancelled) {
+      setState('error');
+      setMessage(result.message);
+    }
+  };
 
   // Email a one-time code (and a magic link). On phones the code is the reliable
   // path: an installed iOS PWA can't receive the link's session from Safari, but
@@ -111,6 +127,25 @@ function SignIn() {
 
       {stage === 'email' ? (
         <>
+          {passkeysSupported() && (
+            <div style={{ width: '100%', maxWidth: 320 }}>
+              <button
+                type="button"
+                className="button button-primary button-block"
+                onClick={signInPasskey}
+                disabled={passkeyBusy}
+              >
+                <FingerprintIcon size={18} />
+                {passkeyBusy ? 'Waiting…' : 'Sign in with Face ID / Touch ID'}
+              </button>
+              <p
+                className="settings-hint"
+                style={{ textAlign: 'center', margin: 'var(--space-sm) 0' }}
+              >
+                or use your email
+              </p>
+            </div>
+          )}
           <p className="settings-hint" style={{ textAlign: 'center' }}>
             Sign in with a one-time email code — no password to remember.
           </p>

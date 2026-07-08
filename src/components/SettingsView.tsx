@@ -2,14 +2,25 @@
  * Settings: dashboard window, server-side reminder schedule + recipient, a
  * test-send button (invokes the Edge Function), and JSON backup/restore.
  */
-import { useRef, useState, type ChangeEvent } from 'react';
+import { format, parseISO } from 'date-fns';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 
+import {
+  deletePasskey,
+  listPasskeys,
+  passkeysSupported,
+  registerPasskey,
+  type PasskeySummary,
+} from '../lib/passkeys';
 import { exportData } from '../lib/storage';
 import { supabase } from '../lib/supabase';
 import { useAppData } from '../state/useAppData';
 import type { AppData } from '../types';
-import { MailIcon } from './icons';
+import { ConfirmDialog } from './ConfirmDialog';
+import { FingerprintIcon, MailIcon, TrashIcon } from './icons';
 import styles from './SettingsView.module.css';
+
+type PasskeyState = 'idle' | 'working' | 'error';
 
 type TestState = 'idle' | 'sending' | 'sent' | 'error';
 
@@ -31,6 +42,55 @@ export function SettingsView() {
   );
   const [importMessage, setImportMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const supportsPasskeys = passkeysSupported();
+  const [passkeys, setPasskeys] = useState<PasskeySummary[]>([]);
+  const [passkeyState, setPasskeyState] = useState<PasskeyState>('idle');
+  const [passkeyMessage, setPasskeyMessage] = useState('');
+  const [pendingDelete, setPendingDelete] = useState<PasskeySummary | null>(
+    null,
+  );
+
+  const refreshPasskeys = async () => {
+    setPasskeys(await listPasskeys());
+  };
+
+  useEffect(() => {
+    if (supportsPasskeys) {
+      void refreshPasskeys();
+    }
+  }, [supportsPasskeys]);
+
+  const handleEnrollPasskey = async () => {
+    setPasskeyState('working');
+    setPasskeyMessage('');
+    const result = await registerPasskey();
+    if (result.ok) {
+      setPasskeyState('idle');
+      setPasskeyMessage('This device is set up. Use it to sign in next time.');
+      await refreshPasskeys();
+    } else if (result.cancelled) {
+      setPasskeyState('idle');
+    } else {
+      setPasskeyState('error');
+      setPasskeyMessage(result.message);
+    }
+  };
+
+  const handleDeletePasskey = async () => {
+    if (!pendingDelete) {
+      return;
+    }
+    const error = await deletePasskey(pendingDelete.id);
+    setPendingDelete(null);
+    if (error) {
+      setPasskeyState('error');
+      setPasskeyMessage(error);
+    } else {
+      setPasskeyMessage('Passkey removed.');
+      await refreshPasskeys();
+    }
+  };
 
   const toggleOffset = (value: number) => {
     const set = new Set(settings.reminderOffsets);
@@ -124,6 +184,62 @@ export function SettingsView() {
         </label>
       </div>
 
+      {supportsPasskeys && (
+        <div className={styles.group}>
+          <h2>Sign-in</h2>
+          <p className="settings-hint">
+            Set up Face ID or Touch ID on this device so you can sign in without
+            waiting for an email code. Your email code still works as a backup.
+          </p>
+
+          {passkeys.length > 0 && (
+            <ul className={styles.passkeyList}>
+              {passkeys.map((passkey) => (
+                <li key={passkey.id} className={styles.passkeyRow}>
+                  <span className={styles.passkeyMeta}>
+                    <span>{passkey.friendlyName || 'This device'}</span>
+                    <small>
+                      Added {format(parseISO(passkey.createdAt), 'PP')}
+                    </small>
+                  </span>
+                  <button
+                    type="button"
+                    className="button button-ghost button-small"
+                    onClick={() => setPendingDelete(passkey)}
+                    aria-label={`Remove ${passkey.friendlyName || 'this device'}`}
+                  >
+                    <TrashIcon size={16} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button
+            className="button button-primary button-block"
+            onClick={handleEnrollPasskey}
+            disabled={passkeyState === 'working'}
+          >
+            <FingerprintIcon size={18} />
+            {passkeyState === 'working'
+              ? 'Setting up…'
+              : 'Enable Face ID / Touch ID'}
+          </button>
+          {passkeyMessage && (
+            <p
+              className={`email-status ${
+                passkeyState === 'error'
+                  ? 'email-status-error'
+                  : 'email-status-ok'
+              }`}
+              role={passkeyState === 'error' ? 'alert' : 'status'}
+            >
+              {passkeyMessage}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className={styles.group}>
         <h2>Email reminders</h2>
         <p className="settings-hint">
@@ -216,6 +332,19 @@ export function SettingsView() {
           </p>
         )}
       </div>
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Remove this passkey?"
+          message={`You will no longer be able to sign in with ${
+            pendingDelete.friendlyName || 'this device'
+          }. Your email code still works.`}
+          confirmLabel="Remove"
+          danger
+          onConfirm={handleDeletePasskey}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
     </section>
   );
 }
