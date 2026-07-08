@@ -78,4 +78,21 @@ export default tseslint.config(
       'unicorn/prefer-node-protocol': 'error',
     },
   },
+  {
+    // Vitest globals (globals: true) so tests don't import describe/it/expect/vi.
+    files: ['src/**/*.test.ts', 'src/test/**/*.ts'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        vi: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+      },
+    },
+  },
 );

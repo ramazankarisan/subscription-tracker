@@ -31,8 +31,9 @@ it (see the `verify` skill).
 
 - **Add a test with any change to `src/lib` logic** — a new date rule, a
   reminder edge case, a mapper column. Match the existing files' style.
-- Pin "now" with `vi.setSystemTime(...)` for anything day-relative so tests are
-  deterministic; import test globals explicitly (`import { describe, it, expect } from 'vitest'`).
+- Test globals (`describe`/`it`/`expect`/`vi`) are enabled (`globals: true`), so
+  test files don't import them. Shared setup lives in `src/test/setupTests.ts`,
+  which pins "now" (`vi.setSystemTime`) so day-relative logic is deterministic.
 - Tests are part of the backpressure gates: `vitest run` is in lefthook
   **pre-push** and in CI. `*.test.*` is excluded from `jscpd` (test fixtures are
   repetitive by design).

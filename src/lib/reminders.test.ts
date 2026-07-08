@@ -1,15 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import type { AppData, Installment, Subscription } from '../types';
 import { getDueItems } from './reminders';
 
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.setSystemTime(new Date('2026-07-01T12:00:00Z'));
-});
-afterEach(() => {
-  vi.useRealTimers();
-});
+// "now" is pinned to 2026-07-01 by src/test/setupTests.ts.
 
 function makeSubscription(id: string, nextRenewal: string): Subscription {
   return {

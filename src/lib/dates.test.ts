@@ -1,5 +1,3 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import {
   advanceByCycle,
   daysUntil,
@@ -10,15 +8,7 @@ import {
   todayIso,
 } from './dates';
 
-// Pin "now" so day-relative helpers are deterministic. Noon avoids timezone
-// boundary flips around midnight.
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.setSystemTime(new Date('2026-07-01T12:00:00Z'));
-});
-afterEach(() => {
-  vi.useRealTimers();
-});
+// "now" is pinned to 2026-07-01 by src/test/setupTests.ts.
 
 describe('todayIso', () => {
   it('returns the pinned day as an ISO string', () => {

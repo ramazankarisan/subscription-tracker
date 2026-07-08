@@ -1,5 +1,3 @@
-import { describe, expect, it } from 'vitest';
-
 import { formatCurrency } from './format';
 
 describe('formatCurrency', () => {
