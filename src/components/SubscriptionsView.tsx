@@ -135,6 +135,7 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
                       href={subscription.cancelUrl}
                       target="_blank"
                       rel="noreferrer"
+                      aria-label="Open cancel page"
                       title="Open cancel page"
                     >
                       <ExternalLinkIcon size={18} />

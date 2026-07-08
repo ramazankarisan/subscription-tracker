@@ -15,8 +15,10 @@
   --warn-soft: rgba(217, 119, 6, 0.16);
   --danger: #dc2626;
   --danger-soft: rgba(220, 38, 38, 0.14);
-  /* Status text on the body bg — darker than the pill hues to clear WCAG AA 4.5:1. */
+  /* Status text — darker than the pill hues to clear WCAG AA 4.5:1 on the
+     soft tints and the body bg. Also used for pill labels. */
   --ok-text: #166534;
+  --warn-text: #92400e;
   --danger-text: #b91c1c;
   --shadow: 0 1px 2px rgba(16, 12, 30, 0.06), 0 6px 16px rgba(16, 12, 30, 0.06);
 
@@ -51,6 +53,7 @@
     --danger-soft: rgba(248, 113, 113, 0.16);
     /* Already high-contrast on the near-black bg; keep the bright hues. */
     --ok-text: #4ade80;
+    --warn-text: #fbbf24;
     --danger-text: #f87171;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.35);
   }
