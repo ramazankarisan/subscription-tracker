@@ -31,7 +31,7 @@
 
 .button-primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .button-primary:not(:disabled):hover {
@@ -40,7 +40,7 @@
 
 .button-danger {
   background: var(--danger);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .button-danger:not(:disabled):hover {
