@@ -13,16 +13,17 @@ closed**.
   vanishing.
 - **Server-scheduled email reminders** — a daily job emails you at your chosen
   offsets (default **3 days before** and **on the due date**), sent from the
-  server via [Resend](https://resend.com) so it works even when the app is shut.
+  server via [Brevo](https://www.brevo.com) so it works even when the app is shut.
 - **Installable** — add it to your phone's home screen like a real app (PWA).
-- **Free & personal** — runs entirely on free tiers; reminders go to your own inbox.
+- **Free & multi-user** — runs entirely on free tiers; anyone can sign in and
+  reminders reach their own inbox.
 
 ## Stack
 
 Vite + React 19 + TypeScript · `date-fns` · `vite-plugin-pwa` ·
 [`@supabase/supabase-js`](https://supabase.com) (Postgres + magic-link auth +
 Row Level Security + a Deno **Edge Function** on a daily **Cron**) ·
-[Resend](https://resend.com) for email · hosted on **GitHub Pages**.
+[Brevo](https://www.brevo.com) for email · hosted on **GitHub Pages**.
 
 The store (`src/state/useAppData.tsx`) reads/writes Supabase per user, with a
 localStorage copy kept as an offline cache. Architecture details: see `CLAUDE.md`.
@@ -46,9 +47,9 @@ pnpm format              # prettier --write .
 
 ## Setup (one-time)
 
-You need a Supabase project + Resend account first.
+You need a Supabase project + Brevo account first.
 
-Full click-by-click instructions — Supabase project, database schema, Resend key,
+Full click-by-click instructions — Supabase project, database schema, Brevo key,
 the reminder Edge Function, the daily cron, and GitHub Pages variables — are in
 **[`docs/supabase-setup.md`](docs/supabase-setup.md)**.
 
@@ -71,10 +72,10 @@ Every push to `main` builds and publishes to **GitHub Pages** via
 Reminders are sent **server-side** (no per-user email keys). In **Settings** you
 choose _when_ (chips: on the day / 1 / 3 / 7 days before) and _which inbox_.
 
-> On Resend's free tier the recipient must be **your own Resend account email**
-> (`onboarding@resend.dev` sender, no domain to verify). Emailing other people
-> would require verifying a domain — intentionally out of scope for this personal
-> app.
+> Brevo's free tier (300 emails/day) sends to **any** recipient from a single
+> **verified sender** — no domain needed — so every signed-in user gets their own
+> reminders. Mail from a plain address (no domain DKIM) can land in spam; a
+> verified domain in Brevo fixes deliverability later with no code change.
 
 ## How dates work
 

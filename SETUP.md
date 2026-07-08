@@ -30,11 +30,11 @@ Legend: 🔓 public / safe to share · 🔒 secret — never commit.
       `http://localhost:5173/`) to Site URL + Redirect URLs.
 - [ ] Deploy the function + secrets, then schedule the daily cron — see the guide.
 
-## Resend — email
+## Brevo — email
 
-- [ ] Free account, verify your own email, create an API key 🔒 (set as a Supabase
-      function secret, never committed). Free tier sends `onboarding@resend.dev` →
-      **your own inbox** only.
+- [ ] Free account, **verify a single sender** (an email you own), create an API
+      key 🔒 (Supabase function secret, never committed). Set `REMINDER_FROM` to
+      that verified sender. Free tier: 300/day → **any** recipient's inbox.
 
 ## GitHub Pages — hosting
 
@@ -44,7 +44,7 @@ Legend: 🔓 public / safe to share · 🔒 secret — never commit.
 
 ## Secrets recap
 
-- 🔒 Resend API key + `CRON_SECRET` → live **only** in Supabase's secret store.
+- 🔒 Brevo API key + `CRON_SECRET` → live **only** in Supabase's secret store.
 - 🔓 Project URL + publishable/anon key → fine in `.env` / Actions Variables
   (public by design; Row Level Security protects the data).
 - `secretlint` blocks any 🔒 value that accidentally gets staged.
