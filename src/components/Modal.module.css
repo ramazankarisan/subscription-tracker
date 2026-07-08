@@ -19,6 +19,8 @@
 .modal {
   width: 100%;
   max-width: 520px;
+  /* Focused programmatically on open; no ring on the container itself. */
+  outline: none;
   max-height: 92dvh;
   overflow-y: auto;
   background: var(--surface);
