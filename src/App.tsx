@@ -12,8 +12,7 @@ import { AppDataProvider, useAppData } from './state/useAppData';
 
 function AppShell() {
   const [tab, setTab] = useState<TabId>('dashboard');
-  const { settings, userEmail, signOut, syncError, dismissSyncError } =
-    useAppData();
+  const { settings, syncError, dismissSyncError } = useAppData();
 
   return (
     <div className={styles.app}>
@@ -22,13 +21,6 @@ function AppShell() {
           <BellIcon size={22} />
           <span>SubTrack</span>
         </div>
-        <button
-          className="button button-ghost button-small"
-          onClick={() => void signOut()}
-          title={`Signed in as ${userEmail}`}
-        >
-          Sign out
-        </button>
       </header>
 
       {syncError && (

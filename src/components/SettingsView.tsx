@@ -1,6 +1,8 @@
 /**
- * Settings: dashboard window, server-side reminder schedule + recipient, a
- * test-send button (invokes the Edge Function), and JSON backup/restore.
+ * Settings: account + sign-out, dashboard window, server-side reminder schedule
+ * + recipient, a test-send button (invokes the Edge Function), and JSON
+ * backup/restore. Restoring a backup is guarded by a confirm because it
+ * replaces all current data.
  */
 import { format, parseISO } from 'date-fns';
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
@@ -33,7 +35,8 @@ const OFFSET_CHOICES: Array<{ value: number; label: string }> = [
 ];
 
 export function SettingsView() {
-  const { data, settings, updateSettings, replaceData } = useAppData();
+  const { data, settings, updateSettings, replaceData, userEmail, signOut } =
+    useAppData();
 
   const [testState, setTestState] = useState<TestState>('idle');
   const [testMessage, setTestMessage] = useState('');
@@ -41,6 +44,8 @@ export function SettingsView() {
     'idle',
   );
   const [importMessage, setImportMessage] = useState('');
+  const [pendingImport, setPendingImport] = useState<AppData | null>(null);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const supportsPasskeys = passkeysSupported();
@@ -60,6 +65,14 @@ export function SettingsView() {
       void refreshPasskeys();
     }
   }, [supportsPasskeys]);
+
+  // Default the reminder recipient to the signed-in account — on the free tier
+  // that's the only address that can actually receive mail.
+  useEffect(() => {
+    if (!settings.recipientEmail && userEmail) {
+      updateSettings({ recipientEmail: userEmail });
+    }
+  }, [settings.recipientEmail, userEmail, updateSettings]);
 
   const handleEnrollPasskey = async () => {
     setPasskeyState('working');
@@ -126,13 +139,15 @@ export function SettingsView() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = 'subscription-tracker-backup.json';
+    anchor.download = 'subtrack-backup.json';
     anchor.click();
     URL.revokeObjectURL(url);
   };
 
+  // Parse + validate the file, then wait for confirmation before replacing.
   const handleImport = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    event.target.value = '';
     if (!file) {
       return;
     }
@@ -144,9 +159,9 @@ export function SettingsView() {
           Array.isArray(parsed.subscriptions) &&
           Array.isArray(parsed.installments)
         ) {
-          replaceData(parsed);
-          setImportState('ok');
-          setImportMessage('Backup restored.');
+          setImportState('idle');
+          setImportMessage('');
+          setPendingImport(parsed);
         } else {
           setImportState('error');
           setImportMessage('That file does not look like a valid backup.');
@@ -157,13 +172,32 @@ export function SettingsView() {
       }
     };
     reader.readAsText(file);
-    event.target.value = '';
+  };
+
+  const confirmImport = () => {
+    if (pendingImport) {
+      replaceData(pendingImport);
+      setImportState('ok');
+      setImportMessage('Backup restored.');
+    }
+    setPendingImport(null);
   };
 
   return (
     <section className="view">
       <div className="view-header">
         <h1>Settings</h1>
+      </div>
+
+      <div className={styles.group}>
+        <h2>Account</h2>
+        <p className="settings-hint">Signed in as {userEmail}.</p>
+        <button
+          className="button button-ghost"
+          onClick={() => setConfirmSignOut(true)}
+        >
+          Sign out
+        </button>
       </div>
 
       <div className={styles.group}>
@@ -244,9 +278,8 @@ export function SettingsView() {
         <h2>Email reminders</h2>
         <p className="settings-hint">
           A daily job emails you before anything is due — even when the app is
-          closed. Pick when to be reminded and where to send it. On Resend's
-          free tier this must be your own Resend account email (no domain to
-          verify).
+          closed. Reminders go to your account email by default; on the free
+          tier that's the only address they can reach.
         </p>
 
         <label className="field">
@@ -343,6 +376,27 @@ export function SettingsView() {
           danger
           onConfirm={handleDeletePasskey}
           onCancel={() => setPendingDelete(null)}
+        />
+      )}
+
+      {pendingImport && (
+        <ConfirmDialog
+          title="Restore backup"
+          message="Replace all current data with this backup? This can't be undone."
+          confirmLabel="Replace"
+          danger
+          onConfirm={confirmImport}
+          onCancel={() => setPendingImport(null)}
+        />
+      )}
+
+      {confirmSignOut && (
+        <ConfirmDialog
+          title="Sign out"
+          message="Sign out of SubTrack on this device?"
+          confirmLabel="Sign out"
+          onConfirm={() => void signOut()}
+          onCancel={() => setConfirmSignOut(false)}
         />
       )}
     </section>
