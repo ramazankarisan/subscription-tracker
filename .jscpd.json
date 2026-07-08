@@ -2,6 +2,12 @@
   "minTokens": 50,
   "threshold": 3,
   "format": ["typescript", "tsx"],
-  "ignore": ["supabase/**", "dist/**", "dev-dist/**", "**/*.config.*"],
+  "ignore": [
+    "supabase/**",
+    "dist/**",
+    "dev-dist/**",
+    "**/*.config.*",
+    "**/*.test.*"
+  ],
   "reporters": ["console", "threshold"]
 }

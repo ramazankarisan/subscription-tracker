@@ -24,6 +24,8 @@ pre-push:
   commands:
     typecheck:
       run: node_modules/.bin/tsc -b --noEmit
+    test:
+      run: node_modules/.bin/vitest run
     knip:
       run: node_modules/.bin/knip --production --strict
     dupes:
