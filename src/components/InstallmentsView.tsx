@@ -127,8 +127,8 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
                   ) : (
                     <p className="card-meta">
                       {remaining} left ·{' '}
-                      {formatCurrency(remainingAmount, installment.currency)}{' '}
-                      remaining
+                      {formatCurrency(remainingAmount, installment.currency)} to
+                      go
                       {dueDate && (
                         <>
                           {' · next '}

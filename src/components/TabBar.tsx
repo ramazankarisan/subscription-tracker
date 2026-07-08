@@ -11,8 +11,8 @@ export type TabId = 'dashboard' | 'subscriptions' | 'installments' | 'settings';
 
 const TABS: Array<{ id: TabId; label: string; Icon: typeof DashboardIcon }> = [
   { id: 'dashboard', label: 'Home', Icon: DashboardIcon },
-  { id: 'subscriptions', label: 'Subs', Icon: CardIcon },
-  { id: 'installments', label: 'Plans', Icon: InstallmentsIcon },
+  { id: 'subscriptions', label: 'Subscriptions', Icon: CardIcon },
+  { id: 'installments', label: 'Installments', Icon: InstallmentsIcon },
   { id: 'settings', label: 'Settings', Icon: SettingsIcon },
 ];
 

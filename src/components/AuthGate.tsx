@@ -219,7 +219,7 @@ function ConfigNeeded() {
         style={{ textAlign: 'center', maxWidth: 360 }}
       >
         Backend not configured. Set <code>VITE_SUPABASE_URL</code> and{' '}
-        <code>VITE_SUPABASE_ANON_KEY</code> (see{' '}
+        <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> (see{' '}
         <code>docs/supabase-setup.md</code>
         ), then reload.
       </p>
