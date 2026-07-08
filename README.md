@@ -29,16 +29,11 @@ Reminders then arrive automatically before anything is due — even with the app
 > [Fork it and run your own](#make-it-yours-fork--own-instance)** with your own
 > Supabase + Brevo — then nobody but you can see your data.
 
-<!-- Screenshots: drop home.png / subscriptions.png / installments.png / settings.png
-     into docs/screenshots/, then uncomment this block.
-
 ## Screenshots
 
 |                                          Home                                           |                                      Subscriptions                                      |                                     Installments                                      |                                         Settings                                          |
 | :-------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------: |
 | ![Home — monthly total, what's due soon, one-tap test email](docs/screenshots/home.png) | ![Subscriptions — renewal dates and cost per month](docs/screenshots/subscriptions.png) | ![Installments — payment progress and what's left](docs/screenshots/installments.png) | ![Settings — account, reminder timing, Face ID / Touch ID](docs/screenshots/settings.png) |
-
--->
 
 ## Highlights
 
