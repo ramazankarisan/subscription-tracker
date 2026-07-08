@@ -1,0 +1,26 @@
+/* Global design-system primitive: chips. Documented in DESIGN.md §5. */
+.chip {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface, transparent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.chip-active {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

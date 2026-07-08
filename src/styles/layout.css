@@ -1,0 +1,26 @@
+/* Global layout primitives: view scaffold + empty state. Shared by all four views. */
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.view-header h1 {
+  font-size: 26px;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 28px 18px;
+  margin: 0;
+}
