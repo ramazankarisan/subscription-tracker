@@ -13,6 +13,7 @@ import {
 import { formatCurrency } from '../lib/format';
 import { useAppData } from '../state/useAppData';
 import type { Installment } from '../types';
+import { ConfirmDialog } from './ConfirmDialog';
 import { Modal } from './Modal';
 import { InstallmentForm } from './InstallmentForm';
 import { CheckIcon, EditIcon, PlusIcon, TrashIcon, UndoIcon } from './icons';
@@ -30,6 +31,7 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Installment | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Installment | null>(null);
 
   const openAdd = () => {
     setEditing(null);
@@ -50,10 +52,11 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
     setIsFormOpen(false);
   };
 
-  const handleDelete = (installment: Installment) => {
-    if (window.confirm(`Delete "${installment.name}"?`)) {
-      deleteInstallment(installment.id);
+  const confirmDelete = () => {
+    if (pendingDelete) {
+      deleteInstallment(pendingDelete.id);
     }
+    setPendingDelete(null);
   };
 
   return (
@@ -180,7 +183,7 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
                   </button>
                   <button
                     className="icon-button icon-button-danger"
-                    onClick={() => handleDelete(installment)}
+                    onClick={() => setPendingDelete(installment)}
                     aria-label="Delete"
                   >
                     <TrashIcon size={18} />
@@ -203,6 +206,17 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
             onCancel={closeForm}
           />
         </Modal>
+      )}
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Delete installment"
+          message={`Delete “${pendingDelete.name}”? This can't be undone.`}
+          confirmLabel="Delete"
+          danger
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
       )}
     </section>
   );

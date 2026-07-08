@@ -38,6 +38,15 @@
   background: var(--accent-strong);
 }
 
+.button-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.button-danger:not(:disabled):hover {
+  background: color-mix(in srgb, var(--danger) 88%, black);
+}
+
 .button-ghost {
   background: var(--surface);
   border-color: var(--border);
