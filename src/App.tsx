@@ -1,6 +1,5 @@
 import { useState } from 'react';
 
-import './App.css';
 import styles from './App.module.css';
 import { AuthGate } from './components/AuthGate';
 import { Dashboard } from './components/Dashboard';
@@ -19,7 +18,7 @@ function AppShell() {
   return (
     <div className={styles.app}>
       <header className={styles.header}>
-        <div className={styles.brand}>
+        <div className="app-brand">
           <BellIcon size={22} />
           <span>SubTrack</span>
         </div>

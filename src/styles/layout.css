@@ -15,6 +15,21 @@
   font-size: 26px;
 }
 
+/* Brand wordmark, shared by the app header and the signed-out auth screens. */
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.app-brand svg {
+  color: var(--accent);
+}
+
 .empty-state {
   text-align: center;
   color: var(--text-muted);

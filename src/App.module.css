@@ -21,20 +21,6 @@
   border-bottom: 1px solid var(--border);
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: -0.02em;
-  color: var(--text);
-}
-
-.brand svg {
-  color: var(--accent);
-}
-
 .main {
   flex: 1;
   padding: 18px 16px calc(84px + env(safe-area-inset-bottom));
