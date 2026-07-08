@@ -23,5 +23,7 @@ export const supabase = createClient(url ?? '', publishableKey ?? '', {
     autoRefreshToken: true,
     // Complete the magic-link sign-in when the user lands back on the app.
     detectSessionInUrl: true,
+    // Opt in to the beta passkey API (Face ID / Touch ID sign-in). See lib/passkeys.ts.
+    experimental: { passkey: true },
   },
 });

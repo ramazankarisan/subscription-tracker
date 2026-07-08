@@ -118,6 +118,16 @@ export const MailIcon = (props: IconProps) => (
   </Base>
 );
 
+export const FingerprintIcon = (props: IconProps) => (
+  <Base {...props}>
+    <path d="M12 10a2 2 0 0 0-2 2c0 1.5.5 3.5-1 5.5" />
+    <path d="M8 8a5 5 0 0 1 8 3c0 3-1 5-2 6" />
+    <path d="M6.5 5.5A8 8 0 0 1 20 11c0 1.5 0 3-.5 4.5" />
+    <path d="M12 12v1c0 2.5-.5 4.5-1.5 6" />
+    <path d="M4 12a8 8 0 0 1 1-4" />
+  </Base>
+);
+
 export const UndoIcon = (props: IconProps) => (
   <Base {...props}>
     <polyline points="9 14 4 9 9 4" />
