@@ -26,6 +26,10 @@ export function SettingsView() {
 
   const [testState, setTestState] = useState<TestState>('idle');
   const [testMessage, setTestMessage] = useState('');
+  const [importState, setImportState] = useState<'idle' | 'ok' | 'error'>(
+    'idle',
+  );
+  const [importMessage, setImportMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleOffset = (value: number) => {
@@ -81,12 +85,15 @@ export function SettingsView() {
           Array.isArray(parsed.installments)
         ) {
           replaceData(parsed);
-          window.alert('Backup restored.');
+          setImportState('ok');
+          setImportMessage('Backup restored.');
         } else {
-          window.alert('That file does not look like a valid backup.');
+          setImportState('error');
+          setImportMessage('That file does not look like a valid backup.');
         }
       } catch {
-        window.alert('Could not read that file.');
+        setImportState('error');
+        setImportMessage('Could not read that file.');
       }
     };
     reader.readAsText(file);
@@ -198,6 +205,16 @@ export function SettingsView() {
             onChange={handleImport}
           />
         </div>
+        {importMessage && (
+          <p
+            className={`email-status ${
+              importState === 'error' ? 'email-status-error' : 'email-status-ok'
+            }`}
+            role={importState === 'error' ? 'alert' : 'status'}
+          >
+            {importMessage}
+          </p>
+        )}
       </div>
     </section>
   );
