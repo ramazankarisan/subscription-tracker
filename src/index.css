@@ -26,6 +26,7 @@
 
   --radius: 14px;
   --radius-sm: 10px;
+  --radius-xs: 5px; /* inline code chips only */
 
   /* Spacing scale (DESIGN.md §spacing). Use these instead of magic px. */
   --space-xs: 4px;
@@ -118,7 +119,7 @@ code {
   font-size: 0.85em;
   background: var(--surface-2);
   padding: 1px 5px;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
 }
 
 /* Honour reduced-motion: neutralise the progress fill + all transitions. */
