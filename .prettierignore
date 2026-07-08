@@ -8,3 +8,6 @@ supabase/.temp
 .claude/skills/impeccable
 .github/skills/impeccable
 .github/hooks
+
+# impeccable design-tool artifacts (generated critique snapshots, etc.)
+.impeccable
