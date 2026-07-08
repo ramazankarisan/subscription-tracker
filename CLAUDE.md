@@ -16,9 +16,26 @@ pnpm typecheck  # tsc -b --noEmit
 pnpm knip       # unused files / exports / deps
 pnpm secretlint # scan for committed secrets
 pnpm format     # prettier --write .
+pnpm test       # vitest run (unit tests, once)
+pnpm test:watch # vitest in watch mode
 ```
 
-There is no test runner configured.
+## Testing
+
+**Vitest** runs the unit suite. Tests are **colocated** next to the code as
+`*.test.ts` and cover the **pure logic in `src/lib`** (dates, reminders,
+currency formatting, DB↔domain mappers) — the calendar math and the "what's
+due" rules are the parts worth protecting. They run in the `node` environment
+(no DOM). React components are not unit-tested; the app is verified by driving
+it (see the `verify` skill).
+
+- **Add a test with any change to `src/lib` logic** — a new date rule, a
+  reminder edge case, a mapper column. Match the existing files' style.
+- Pin "now" with `vi.setSystemTime(...)` for anything day-relative so tests are
+  deterministic; import test globals explicitly (`import { describe, it, expect } from 'vitest'`).
+- Tests are part of the backpressure gates: `vitest run` is in lefthook
+  **pre-push** and in CI. `*.test.*` is excluded from `jscpd` (test fixtures are
+  repetitive by design).
 
 `pnpm dev` needs a `.env` (`cp .env.example .env`) with `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_PUBLISHABLE_KEY`. One-time backend setup (Supabase, Resend, cron,
@@ -30,8 +47,8 @@ Pages variables) is in `docs/supabase-setup.md`.
   pull request → merge. Do git work in a git **worktree** (not the main tree),
   stage only the files you changed, and use **Conventional Commits**.
 - **Backpressure gates** (see `docs/backpressure.md`): lefthook runs prettier +
-  eslint + secretlint on pre-commit and tsc + knip + jscpd + build on pre-push;
-  GitHub Actions CI (`.github/workflows/ci.yml`) re-runs all of them; a Claude
+  eslint + secretlint on pre-commit and tsc + vitest + knip + jscpd + build on
+  pre-push; GitHub Actions CI (`.github/workflows/ci.yml`) re-runs all of them; a Claude
   Code Stop hook blocks finishing a turn while gates fail on changed files.
   ESLint is the single linter (strict TS + React + `curly` + no-abbreviations).
 - The Deno Edge Function under `supabase/**` is excluded from `knip` (it's a

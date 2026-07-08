@@ -35,6 +35,9 @@ jobs:
       - name: Typecheck (tsc)
         run: pnpm exec tsc -b --noEmit
 
+      - name: Test (vitest)
+        run: pnpm exec vitest run
+
       - name: Dead code / unused deps (knip)
         run: pnpm exec knip --production --strict
 
