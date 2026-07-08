@@ -12,7 +12,7 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import type { AuthedUser } from '../state/useAppData';
 import { BellIcon, MailIcon } from './icons';
 
-type LinkState = 'idle' | 'sending' | 'sent' | 'error';
+type LinkState = 'idle' | 'sending' | 'error';
 
 export function AuthGate({
   children,
@@ -67,8 +67,9 @@ function SignIn() {
     event.preventDefault();
     setState('sending');
     setMessage('');
+    const trimmedEmail = email.trim();
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: trimmedEmail,
       options: { emailRedirectTo: window.location.href },
     });
     if (error) {
@@ -77,7 +78,9 @@ function SignIn() {
     } else {
       setStage('code');
       setState('idle');
-      setMessage(`We emailed a 6-digit code to ${email}.`);
+      setMessage(
+        `We emailed a 6-digit code to ${trimmedEmail}. Check spam if it's not there.`,
+      );
     }
   };
 
@@ -86,13 +89,15 @@ function SignIn() {
     setState('sending');
     setMessage('');
     const { error } = await supabase.auth.verifyOtp({
-      email,
+      email: email.trim(),
       token: code.trim(),
       type: 'email',
     });
     if (error) {
       setState('error');
-      setMessage(error.message);
+      setMessage(
+        'That code did not work. Check it and try again, or request a new one.',
+      );
     }
     // On success, AuthGate's onAuthStateChange signs the user in.
   };
@@ -115,6 +120,7 @@ function SignIn() {
               <input
                 type="email"
                 required
+                autoFocus
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@example.com"
@@ -143,12 +149,13 @@ function SignIn() {
               <input
                 type="text"
                 required
+                autoFocus
                 value={code}
                 // Keep only digits; Supabase OTP length is configurable (6–10).
                 onChange={(event) =>
                   setCode(event.target.value.replace(/\D/g, ''))
                 }
-                placeholder="Code from email"
+                placeholder="123456"
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 maxLength={10}
@@ -163,6 +170,7 @@ function SignIn() {
             </button>
           </form>
           <button
+            type="button"
             className="button button-ghost button-small"
             onClick={() => {
               setStage('email');
@@ -181,6 +189,8 @@ function SignIn() {
           className={`email-status ${
             state === 'error' ? 'email-status-error' : 'email-status-ok'
           }`}
+          role={state === 'error' ? 'alert' : 'status'}
+          aria-live={state === 'error' ? 'assertive' : 'polite'}
         >
           {message}
         </p>

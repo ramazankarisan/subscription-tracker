@@ -13,9 +13,9 @@
 }
 
 .email-status-ok {
-  color: var(--ok);
+  color: var(--ok-text);
 }
 
 .email-status-error {
-  color: var(--danger);
+  color: var(--danger-text);
 }

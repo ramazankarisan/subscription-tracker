@@ -53,6 +53,8 @@
 
 .button-block {
   width: 100%;
+  /* Full-width CTAs are primary touch targets — meet the 44px minimum. */
+  min-height: 44px;
 }
 
 .button-pair {
