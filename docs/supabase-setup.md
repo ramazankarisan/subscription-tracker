@@ -1,4 +1,4 @@
-# Phase 2 setup — Supabase + Resend + GitHub Pages
+# Phase 2 setup — Supabase + Brevo + GitHub Pages
 
 Everything below is free and personal-scoped. 🔓 = safe to expose · 🔒 = secret,
 never commit. You do the dashboard steps; the code is already in the repo.
@@ -32,11 +32,11 @@ never commit. You do the dashboard steps; the code is already in the repo.
    sender allows ~2 auth emails/hour; enough for personal use. If you request
    sign-in links faster than that (e.g. while testing) Supabase Auth returns
    `over_email_send_rate_limit` / "email rate limit exceeded" — this is the
-   **login** email, unrelated to Resend or the reminder quota. To lift it:
+   **login** email, unrelated to Brevo or the reminder quota. To lift it:
    raise **Authentication → Rate Limits → "Rate limit for sending emails"**,
    or (better) set **Authentication → Emails → SMTP Settings** to your own
-   Resend account — host `smtp.resend.com`, port `465`, user `resend`,
-   password = your `RESEND_API_KEY` — which raises the default to ~30/hour.
+   Brevo account — host `smtp-relay.brevo.com`, port `587`, user = your Brevo
+   login email, password = a Brevo **SMTP key** (SMTP & API → SMTP).
 5. **Authentication → URL Configuration**: add your site URL
    `https://ramazankarisan.github.io/subscription-tracker/` to **Site URL** and
    **Redirect URLs** (and `http://localhost:5173/` for local dev), so magic
@@ -48,14 +48,24 @@ never commit. You do the dashboard steps; the code is already in the repo.
    Safari and can't hand its session to the standalone app). Keep
    `{{ .ConfirmationURL }}` too so the link still works on desktop.
 
-## 2. Resend (email)
+## 2. Brevo (email)
 
-1. Create a free account at https://resend.com and **verify your own email**.
-2. **API Keys → Create** 🔒 → this is `RESEND_API_KEY`.
-3. Free tier sends from `onboarding@resend.dev` to **your own inbox** — no domain
-   needed. (Emailing other people would require verifying a domain; out of scope.)
-   ⚠️ Set the app's **"Send reminders to"** (Settings) to this **same** email —
-   the one your Resend account uses. Any other address returns a Resend 403.
+Brevo's free tier sends **300 emails/day to any recipient** with only a verified
+**single sender** — no domain required — so reminders reach every user, not just
+you. (Resend, by contrast, needs a verified domain to email anyone but yourself.)
+
+1. Create a free account at https://www.brevo.com.
+2. **Senders, Domains & Dedicated IPs → Senders → Add a sender**: enter a name and
+   an email you own (e.g. your Gmail). Click the confirmation link Brevo emails you.
+   This verified address is what `REMINDER_FROM` must use.
+3. **SMTP & API → API Keys → Generate a new API key** 🔒 → this is `BREVO_API_KEY`.
+4. `REMINDER_FROM` = `Name <verified@email>` (see the secrets step below). Users
+   can leave the app's **"Send reminders to"** (Settings) as their own inbox — any
+   recipient works.
+
+> ⚠️ **Deliverability**: mail from a plain verified address (no domain DKIM) lands
+> in spam more often. Tell early users to check spam and mark "not spam". A real
+> verified domain in Brevo fixes this later without any code change.
 
 ## 3. Deploy the Edge Function + secrets
 
@@ -68,7 +78,8 @@ then `supabase link --project-ref YOUR-REF`):
 # (don't inline $(openssl ...) — you'd never learn the value it set):
 openssl rand -hex 24                        # copy the printed value
 
-supabase secrets set RESEND_API_KEY=re_xxx CRON_SECRET=<paste-that-value>
+supabase secrets set BREVO_API_KEY=xkeysib-xxx CRON_SECRET=<paste-that-value> \
+  REMINDER_FROM="SubTrack <your-verified@email>"
 # service_role + URL are provided to functions automatically.
 
 supabase functions deploy send-reminders    # config.toml sets verify_jwt=false

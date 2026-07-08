@@ -11,19 +11,28 @@
  * `dueDate − offset` for any configured offset (e.g. 3 and 0 → D-3 and D-0),
  * and it hasn't already been recorded in `reminder_log` (idempotency).
  *
- * Secrets (set with `supabase secrets set`): RESEND_API_KEY, CRON_SECRET, and
- * optionally REMINDER_FROM. SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY /
- * SUPABASE_ANON_KEY are injected by the platform.
+ * Secrets (set with `supabase secrets set`): BREVO_API_KEY, CRON_SECRET, and
+ * REMINDER_FROM (must be a Brevo-verified sender, `Name <email>`). SUPABASE_URL /
+ * SUPABASE_SERVICE_ROLE_KEY / SUPABASE_ANON_KEY are injected by the platform.
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
+const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY')!;
 const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? '';
+// Must be a sender verified in Brevo. Format: `Name <email>` or a bare address.
 const REMINDER_FROM =
-  Deno.env.get('REMINDER_FROM') ?? 'SubTrack <onboarding@resend.dev>';
+  Deno.env.get('REMINDER_FROM') ?? 'SubTrack <no-reply@example.com>';
+
+/** Split `Name <email>` (or a bare address) into Brevo's sender object. */
+function parseSender(from: string): { name?: string; email: string } {
+  const match = from.match(/^\s*(.*?)\s*<\s*(.+?)\s*>\s*$/);
+  if (match) return { name: match[1] || undefined, email: match[2] };
+  return { email: from.trim() };
+}
+const SENDER = parseSender(REMINDER_FROM);
 
 /** Recover a missed daily run: a reminder can still fire this many days late. */
 const CATCHUP_DAYS = 2;
@@ -163,27 +172,32 @@ function buildBody(lines: string[]): string {
   ].join('\n');
 }
 
-// ---------- Resend ----------
+// ---------- Brevo ----------
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Send one email via Resend, retrying on HTTP 429 — Resend's own rate limit
- * (`rate_limit_exceeded`; 5 req/sec on the free tier). Honours a `Retry-After`
- * header when present, otherwise backs off ~0.6s, 1.2s, 1.8s. Other errors
- * throw immediately. (Not to be confused with Supabase Auth's
- * `over_email_send_rate_limit`, which throttles login emails — see
- * docs/supabase-setup.md.)
+ * Send one email via Brevo (transactional API), retrying on HTTP 429 — Brevo's
+ * rate limit. Honours a `Retry-After` header when present, otherwise backs off
+ * ~0.6s, 1.2s, 1.8s. Other errors throw immediately. (Not to be confused with
+ * Supabase Auth's `over_email_send_rate_limit`, which throttles login emails —
+ * see docs/supabase-setup.md.)
  */
 async function sendEmail(to: string, subject: string, text: string) {
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'api-key': BREVO_API_KEY,
         'Content-Type': 'application/json',
+        accept: 'application/json',
       },
-      body: JSON.stringify({ from: REMINDER_FROM, to, subject, text }),
+      body: JSON.stringify({
+        sender: SENDER,
+        to: [{ email: to }],
+        subject,
+        textContent: text,
+      }),
     });
     if (res.ok) return;
     if (res.status === 429 && attempt < 3) {
@@ -191,7 +205,7 @@ async function sendEmail(to: string, subject: string, text: string) {
       await sleep(retryAfter > 0 ? retryAfter * 1000 : 600 * (attempt + 1));
       continue;
     }
-    throw new Error(`Resend ${res.status}: ${await res.text()}`);
+    throw new Error(`Brevo ${res.status}: ${await res.text()}`);
   }
 }
 
@@ -349,7 +363,7 @@ async function runAllUsers() {
     const offsets: number[] = row.reminder_offsets?.length
       ? row.reminder_offsets
       : [3, 0];
-    // Space out sends to stay well under Resend's rate limit (5 req/sec) across many users.
+    // Space out sends to stay well under Brevo's API rate limit across many users.
     if (!first) await sleep(600);
     first = false;
     try {

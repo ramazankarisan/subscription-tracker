@@ -39,7 +39,7 @@ it (see the `verify` skill).
   repetitive by design).
 
 `pnpm dev` needs a `.env` (`cp .env.example .env`) with `VITE_SUPABASE_URL` and
-`VITE_SUPABASE_PUBLISHABLE_KEY`. One-time backend setup (Supabase, Resend, cron,
+`VITE_SUPABASE_PUBLISHABLE_KEY`. One-time backend setup (Supabase, Brevo, cron,
 Pages variables) is in `docs/supabase-setup.md`.
 
 ## Workflow (hard rules)
@@ -79,7 +79,7 @@ All calendar math lives in `src/lib/dates.ts` and goes through `date-fns` — do
 
 ### Email reminders (server-side)
 
-A daily **Supabase Edge Function** (`supabase/functions/send-reminders/`, Deno) emails reminders via **Resend** (free tier, `onboarding@resend.dev` → the user's own inbox). It runs on a **Supabase Cron** schedule, so mail goes out even when the app is closed.
+A daily **Supabase Edge Function** (`supabase/functions/send-reminders/`, Deno) emails reminders via **Brevo** (free tier, 300/day, single verified sender → any recipient's inbox). It runs on a **Supabase Cron** schedule, so mail goes out even when the app is closed.
 
 - **Schedule**: for each item and each configured offset in `settings.reminderOffsets` (default `[3, 0]` = 3 days before + on the day), it fires when today is within a short catch-up window of `dueDate − offset`.
 - **Idempotency**: the `reminder_log` table records every `(item, reminder_date, offset)` sent, so a reminder goes out at most once even if the cron double-runs or catches up a missed day.
