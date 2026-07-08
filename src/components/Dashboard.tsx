@@ -8,33 +8,13 @@ import { useState } from 'react';
 
 import { formatDate, relativeDayLabel } from '../lib/dates';
 import { formatCurrency } from '../lib/format';
+import { monthlyEquivalent } from '../lib/money';
 import { getDueItems, type DueItem } from '../lib/reminders';
 import { supabase } from '../lib/supabase';
 import { useAppData } from '../state/useAppData';
-import type { Subscription } from '../types';
 import type { TabId } from './TabBar';
 import { CardIcon, InstallmentsIcon, MailIcon } from './icons';
 import styles from './Dashboard.module.css';
-
-/** Convert any billing cycle to an approximate monthly cost. */
-function monthlyEquivalent(subscription: Subscription): number {
-  const averageDaysPerMonth = 365.25 / 12;
-  switch (subscription.cycle) {
-    case 'weekly':
-      return (subscription.cost * 52) / 12;
-    case 'monthly':
-      return subscription.cost;
-    case 'quarterly':
-      return subscription.cost / 3;
-    case 'yearly':
-      return subscription.cost / 12;
-    case 'custom':
-      return subscription.customIntervalDays
-        ? (subscription.cost * averageDaysPerMonth) /
-            subscription.customIntervalDays
-        : 0;
-  }
-}
 
 type SendState = 'idle' | 'sending' | 'sent' | 'error';
 
@@ -127,24 +107,28 @@ export function Dashboard({
       </div>
 
       <div className={styles.summary}>
-        <div className={styles.summaryStat}>
-          <span className={styles.statValue}>
-            {formatCurrency(monthlySpend, primaryCurrency)}
-          </span>
-          <span className={styles.statLabel}>
-            per month · {subscriptions.length} subscription
-            {subscriptions.length === 1 ? '' : 's'}
-          </span>
-        </div>
-        <div className={styles.summaryStat}>
-          <span className={styles.statValue}>
-            {formatCurrency(remainingDebt, primaryCurrency)}
-          </span>
-          <span className={styles.statLabel}>
-            left to pay · {activeInstallments.length} plan
-            {activeInstallments.length === 1 ? '' : 's'}
-          </span>
-        </div>
+        {subscriptions.length > 0 && (
+          <div className={styles.summaryStat}>
+            <span className={styles.statValue}>
+              {formatCurrency(monthlySpend, primaryCurrency)}
+            </span>
+            <span className={styles.statLabel}>
+              per month · {subscriptions.length} subscription
+              {subscriptions.length === 1 ? '' : 's'}
+            </span>
+          </div>
+        )}
+        {installments.length > 0 && (
+          <div className={styles.summaryStat}>
+            <span className={styles.statValue}>
+              {formatCurrency(remainingDebt, primaryCurrency)}
+            </span>
+            <span className={styles.statLabel}>
+              left to pay · {activeInstallments.length} plan
+              {activeInstallments.length === 1 ? '' : 's'}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className={styles.sectionHeading}>
@@ -153,7 +137,9 @@ export function Dashboard({
 
       {dueItems.length === 0 ? (
         <p className="empty-state">
-          Nothing due in the next {leadDays} days. You're all caught up.
+          {leadDays === 0
+            ? "Nothing due today. You're all caught up."
+            : `Nothing due in the next ${leadDays} days. You're all caught up.`}
         </p>
       ) : (
         <ul className={styles.dueList}>

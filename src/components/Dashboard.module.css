@@ -1,6 +1,7 @@
 .summary {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* Two tiles split the row; a single tile (only subs or only plans) fills it. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
 }
 
