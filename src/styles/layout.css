@@ -24,3 +24,11 @@
   padding: 28px 18px;
   margin: 0;
 }
+
+/* Muted info-paragraph, shared by Dashboard and Settings. */
+.settings-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}

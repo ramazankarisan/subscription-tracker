@@ -12,6 +12,7 @@ import { supabase } from '../lib/supabase';
 import { useAppData } from '../state/useAppData';
 import type { Subscription } from '../types';
 import { BellIcon, CardIcon, InstallmentsIcon, MailIcon } from './icons';
+import styles from './Dashboard.module.css';
 
 /** Convert any billing cycle to an approximate monthly cost. */
 function monthlyEquivalent(subscription: Subscription): number {
@@ -91,46 +92,46 @@ export function Dashboard({
         <h1>Overview</h1>
       </div>
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon">
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.statIcon}>
             <CardIcon size={20} />
           </div>
-          <span className="stat-value">
+          <span className={styles.statValue}>
             {formatCurrency(monthlySpend, primaryCurrency)}
           </span>
-          <span className="stat-label">per month</span>
+          <span className={styles.statLabel}>per month</span>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon">
+        <div className={styles.statCard}>
+          <div className={styles.statIcon}>
             <CardIcon size={20} />
           </div>
-          <span className="stat-value">{subscriptions.length}</span>
-          <span className="stat-label">
+          <span className={styles.statValue}>{subscriptions.length}</span>
+          <span className={styles.statLabel}>
             subscription{subscriptions.length === 1 ? '' : 's'}
           </span>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon">
+        <div className={styles.statCard}>
+          <div className={styles.statIcon}>
             <InstallmentsIcon size={20} />
           </div>
-          <span className="stat-value">
+          <span className={styles.statValue}>
             {formatCurrency(remainingDebt, primaryCurrency)}
           </span>
-          <span className="stat-label">left to pay</span>
+          <span className={styles.statLabel}>left to pay</span>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon">
+        <div className={styles.statCard}>
+          <div className={styles.statIcon}>
             <InstallmentsIcon size={20} />
           </div>
-          <span className="stat-value">{activeInstallments.length}</span>
-          <span className="stat-label">
+          <span className={styles.statValue}>{activeInstallments.length}</span>
+          <span className={styles.statLabel}>
             active plan{activeInstallments.length === 1 ? '' : 's'}
           </span>
         </div>
       </div>
 
-      <div className="section-heading">
+      <div className={styles.sectionHeading}>
         <BellIcon size={18} />
         <h2>Due within {leadDays} days</h2>
       </div>
@@ -140,7 +141,7 @@ export function Dashboard({
           Nothing due soon. You're all caught up. ✅
         </p>
       ) : (
-        <ul className="due-list">
+        <ul className={styles.dueList}>
           {dueItems.map((item) => (
             <DueRow key={`${item.kind}-${item.id}`} item={item} />
           ))}
@@ -191,13 +192,13 @@ function DueRow({ item }: { item: DueItem }) {
   if (item.kind === 'subscription') {
     const { name, cost, currency } = item.subscription;
     return (
-      <li className="due-row">
-        <div className="due-icon">
+      <li className={styles.dueRow}>
+        <div className={styles.dueIcon}>
           <CardIcon size={18} />
         </div>
-        <div className="due-text">
-          <span className="due-name">{name}</span>
-          <span className="due-sub">
+        <div className={styles.dueText}>
+          <span className={styles.dueName}>{name}</span>
+          <span className={styles.dueSub}>
             Renews {formatDate(item.dueDate)} · {formatCurrency(cost, currency)}
           </span>
         </div>
@@ -210,13 +211,13 @@ function DueRow({ item }: { item: DueItem }) {
 
   const { name, amountPerPayment, currency, totalPayments } = item.installment;
   return (
-    <li className="due-row">
-      <div className="due-icon">
+    <li className={styles.dueRow}>
+      <div className={styles.dueIcon}>
         <InstallmentsIcon size={18} />
       </div>
-      <div className="due-text">
-        <span className="due-name">{name}</span>
-        <span className="due-sub">
+      <div className={styles.dueText}>
+        <span className={styles.dueName}>{name}</span>
+        <span className={styles.dueSub}>
           Payment {item.paymentNumber}/{totalPayments} ·{' '}
           {formatCurrency(amountPerPayment, currency)}
         </span>
