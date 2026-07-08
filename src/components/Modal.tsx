@@ -19,6 +19,13 @@ interface ModalProps {
    * true. Escape and the explicit Close button always work.
    */
   closeOnBackdrop?: boolean;
+  /**
+   * Where to land focus on open. `'container'` (default) focuses the dialog so
+   * the title is announced first — right for confirmations. `'first-field'`
+   * focuses the first control in the body, so add/edit forms open onto their
+   * first input (and the mobile keyboard pops).
+   */
+  initialFocus?: 'container' | 'first-field';
 }
 
 const FOCUSABLE =
@@ -29,9 +36,11 @@ export function Modal({
   onClose,
   children,
   closeOnBackdrop = true,
+  initialFocus = 'container',
 }: ModalProps) {
   const headingId = useId();
   const modalRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
@@ -40,9 +49,14 @@ export function Modal({
     appRoot?.setAttribute('inert', '');
     appRoot?.setAttribute('aria-hidden', 'true');
 
-    // Land focus on the dialog itself — safe for destructive confirms, and it
-    // lets the screen reader announce the title before the user tabs in.
-    modalRef.current?.focus();
+    // Land focus per policy: the first field for forms, else the dialog itself
+    // (safe for confirms; lets the screen reader announce the title first).
+    if (initialFocus === 'first-field') {
+      const firstField = bodyRef.current?.querySelector<HTMLElement>(FOCUSABLE);
+      (firstField ?? modalRef.current)?.focus();
+    } else {
+      modalRef.current?.focus();
+    }
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -76,7 +90,7 @@ export function Modal({
       appRoot?.removeAttribute('aria-hidden');
       previouslyFocused?.focus?.();
     };
-  }, [onClose]);
+  }, [onClose, initialFocus]);
 
   return createPortal(
     <div
@@ -103,7 +117,9 @@ export function Modal({
             <CloseIcon size={20} />
           </button>
         </header>
-        <div className={styles.body}>{children}</div>
+        <div ref={bodyRef} className={styles.body}>
+          {children}
+        </div>
       </div>
     </div>,
     document.body,

@@ -28,7 +28,6 @@ export function SubscriptionForm({
 }: SubscriptionFormProps) {
   const [name, setName] = useState(initial?.name ?? '');
   const [cost, setCost] = useState(initial ? String(initial.cost) : '');
-  const [currency, setCurrency] = useState(initial?.currency ?? 'EUR');
   const [cycle, setCycle] = useState<BillingCycle>(initial?.cycle ?? 'monthly');
   const [customIntervalDays, setCustomIntervalDays] = useState(
     initial?.customIntervalDays ? String(initial.customIntervalDays) : '30',
@@ -44,7 +43,7 @@ export function SubscriptionForm({
     onSubmit({
       name: name.trim(),
       cost: Number(cost) || 0,
-      currency: currency.trim().toUpperCase() || 'EUR',
+      currency: 'EUR',
       cycle,
       customIntervalDays:
         cycle === 'custom'
@@ -66,35 +65,22 @@ export function SubscriptionForm({
           onChange={(event) => setName(event.target.value)}
           placeholder="Netflix"
           required
-          autoFocus
         />
       </label>
 
-      <div className="field-row">
-        <label className="field">
-          <span>Cost</span>
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min="0"
-            value={cost}
-            onChange={(event) => setCost(event.target.value)}
-            placeholder="12.99"
-            required
-          />
-        </label>
-        <label className="field field-narrow">
-          <span>Currency</span>
-          <input
-            type="text"
-            value={currency}
-            onChange={(event) => setCurrency(event.target.value)}
-            placeholder="EUR"
-            maxLength={3}
-          />
-        </label>
-      </div>
+      <label className="field">
+        <span>Cost (€)</span>
+        <input
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          min="0"
+          value={cost}
+          onChange={(event) => setCost(event.target.value)}
+          placeholder="12.99"
+          required
+        />
+      </label>
 
       <div className="field-row">
         <label className="field">

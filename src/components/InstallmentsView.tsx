@@ -200,6 +200,7 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
           title={editing ? 'Edit installment' : 'Add installment'}
           onClose={closeForm}
           closeOnBackdrop={false}
+          initialFocus="first-field"
         >
           <InstallmentForm
             initial={editing ?? undefined}
