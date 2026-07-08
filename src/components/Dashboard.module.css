@@ -1,23 +1,18 @@
-.statsGrid {
+.summary {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.statCard {
+.summaryStat {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 14px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.statIcon {
-  color: var(--accent);
-  margin-bottom: 2px;
+  gap: 3px;
 }
 
 .statValue {
@@ -31,6 +26,39 @@
   color: var(--text-muted);
 }
 
+/* First-run panel: shown when there's no data yet, in place of the summary
+   + due list, so a new user has an obvious next step instead of a false
+   "all caught up". */
+.firstRun {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.firstRun h2 {
+  font-size: 18px;
+}
+
+.firstRun p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.firstRunActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
 .sectionHeading {
   display: flex;
   align-items: center;
@@ -39,8 +67,9 @@
   margin-top: 4px;
 }
 
+/* Muted, not accent — the glance screen reserves violet for the active tab. */
 .sectionHeading svg {
-  color: var(--accent);
+  color: var(--text-muted);
 }
 
 .sectionHeading h2 {
@@ -73,8 +102,8 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--surface-2);
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
