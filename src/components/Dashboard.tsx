@@ -127,24 +127,28 @@ export function Dashboard({
       </div>
 
       <div className={styles.summary}>
-        <div className={styles.summaryStat}>
-          <span className={styles.statValue}>
-            {formatCurrency(monthlySpend, primaryCurrency)}
-          </span>
-          <span className={styles.statLabel}>
-            per month · {subscriptions.length} subscription
-            {subscriptions.length === 1 ? '' : 's'}
-          </span>
-        </div>
-        <div className={styles.summaryStat}>
-          <span className={styles.statValue}>
-            {formatCurrency(remainingDebt, primaryCurrency)}
-          </span>
-          <span className={styles.statLabel}>
-            left to pay · {activeInstallments.length} plan
-            {activeInstallments.length === 1 ? '' : 's'}
-          </span>
-        </div>
+        {subscriptions.length > 0 && (
+          <div className={styles.summaryStat}>
+            <span className={styles.statValue}>
+              {formatCurrency(monthlySpend, primaryCurrency)}
+            </span>
+            <span className={styles.statLabel}>
+              per month · {subscriptions.length} subscription
+              {subscriptions.length === 1 ? '' : 's'}
+            </span>
+          </div>
+        )}
+        {installments.length > 0 && (
+          <div className={styles.summaryStat}>
+            <span className={styles.statValue}>
+              {formatCurrency(remainingDebt, primaryCurrency)}
+            </span>
+            <span className={styles.statLabel}>
+              left to pay · {activeInstallments.length} plan
+              {activeInstallments.length === 1 ? '' : 's'}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className={styles.sectionHeading}>
@@ -153,7 +157,9 @@ export function Dashboard({
 
       {dueItems.length === 0 ? (
         <p className="empty-state">
-          Nothing due in the next {leadDays} days. You're all caught up.
+          {leadDays === 0
+            ? "Nothing due today. You're all caught up."
+            : `Nothing due in the next ${leadDays} days. You're all caught up.`}
         </p>
       ) : (
         <ul className={styles.dueList}>
