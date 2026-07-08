@@ -1,49 +1,6 @@
 /* View-specific layout. Design-system primitives live in src/styles/*.
    Each block below migrates to a colocated *.module.css in later phases. */
 
-/* ---------- App shell ---------- */
-.app {
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
-  max-width: 560px;
-  margin: 0 auto;
-  background: var(--bg);
-}
-
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 18px;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border);
-}
-
-.app-brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: -0.02em;
-  color: var(--text);
-}
-
-.app-brand svg {
-  color: var(--accent);
-}
-
-.app-main {
-  flex: 1;
-  padding: 18px 16px calc(84px + env(safe-area-inset-bottom));
-}
-
 /* ---------- Progress ---------- */
 .progress {
   display: flex;

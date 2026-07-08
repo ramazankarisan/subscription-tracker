@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import './App.css';
+import styles from './App.module.css';
 import { AuthGate } from './components/AuthGate';
 import { Dashboard } from './components/Dashboard';
 import { InstallmentsView } from './components/InstallmentsView';
@@ -16,9 +17,9 @@ function AppShell() {
     useAppData();
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <div className="app-brand">
+    <div className={styles.app}>
+      <header className={styles.header}>
+        <div className={styles.brand}>
           <BellIcon size={22} />
           <span>SubTrack</span>
         </div>
@@ -32,10 +33,10 @@ function AppShell() {
       </header>
 
       {syncError && (
-        <div className="sync-error-banner" role="alert">
+        <div className={styles.syncBanner} role="alert">
           <span>⚠ {syncError}</span>
           <button
-            className="sync-error-dismiss"
+            className={styles.syncDismiss}
             onClick={dismissSyncError}
             aria-label="Dismiss"
           >
@@ -44,7 +45,7 @@ function AppShell() {
         </div>
       )}
 
-      <main className="app-main">
+      <main className={styles.main}>
         {tab === 'dashboard' && (
           <Dashboard onNavigateToSettings={() => setTab('settings')} />
         )}
