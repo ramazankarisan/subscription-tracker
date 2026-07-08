@@ -1,0 +1,26 @@
+/* Global design-system primitive: status pills. Documented in DESIGN.md §5.
+   Always paired with a word — never colour-only (The Word-Plus-Colour Rule). */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pill-ok {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.pill-soon {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.pill-overdue {
+  color: var(--danger);
+  background: var(--danger-soft);
+}

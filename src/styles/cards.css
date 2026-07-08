@@ -1,0 +1,82 @@
+/* Global design-system primitive: cards / list items. Documented in DESIGN.md §5.
+   Flat surface, hairline border, one soft shadow, no nesting (The No-Nested-Cards Rule). */
+.card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.card-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card-title {
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.card-amount {
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.card-amount small {
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 0.72em;
+}
+
+.card-meta {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-notes {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.card-actions .button-small {
+  margin-right: auto;
+}

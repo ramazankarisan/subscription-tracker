@@ -16,6 +16,7 @@ import type { Installment } from '../types';
 import { Modal } from './Modal';
 import { InstallmentForm } from './InstallmentForm';
 import { CheckIcon, EditIcon, PlusIcon, TrashIcon, UndoIcon } from './icons';
+import styles from './InstallmentsView.module.css';
 
 export function InstallmentsView({ leadDays }: { leadDays: number }) {
   const {
@@ -103,14 +104,14 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
                     </span>
                   </div>
 
-                  <div className="progress">
-                    <div className="progress-track">
+                  <div className={styles.progress}>
+                    <div className={styles.track}>
                       <div
-                        className="progress-fill"
+                        className={styles.fill}
                         style={{ width: `${Math.round(progress * 100)}%` }}
                       />
                     </div>
-                    <span className="progress-label">
+                    <span className={styles.label}>
                       {installment.paidPayments} / {installment.totalPayments}{' '}
                       paid
                     </span>

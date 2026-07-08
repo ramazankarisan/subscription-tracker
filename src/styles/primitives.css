@@ -1,0 +1,10 @@
+/* Barrel for all global, shared styles (the design-system primitives).
+   Imported once in main.tsx. Design tokens live in src/index.css; per-view
+   layout lives in colocated *.module.css files. */
+@import './buttons.css';
+@import './pills.css';
+@import './forms.css';
+@import './cards.css';
+@import './chips.css';
+@import './layout.css';
+@import './feedback.css';

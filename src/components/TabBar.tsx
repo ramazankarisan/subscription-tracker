@@ -5,6 +5,7 @@ import {
   InstallmentsIcon,
   SettingsIcon,
 } from './icons';
+import styles from './TabBar.module.css';
 
 export type TabId = 'dashboard' | 'subscriptions' | 'installments' | 'settings';
 
@@ -22,12 +23,12 @@ interface TabBarProps {
 
 export function TabBar({ active, onChange }: TabBarProps) {
   return (
-    <nav className="tab-bar" aria-label="Main navigation">
+    <nav className={styles.bar} aria-label="Main navigation">
       {TABS.map(({ id, label, Icon }) => (
         <button
           key={id}
           type="button"
-          className={`tab ${active === id ? 'tab-active' : ''}`}
+          className={`${styles.tab} ${active === id ? styles.tabActive : ''}`}
           onClick={() => onChange(id)}
           aria-current={active === id ? 'page' : undefined}
         >

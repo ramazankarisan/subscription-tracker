@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import { useAppData } from '../state/useAppData';
 import type { AppData } from '../types';
 import { MailIcon } from './icons';
+import styles from './SettingsView.module.css';
 
 type TestState = 'idle' | 'sending' | 'sent' | 'error';
 
@@ -98,7 +99,7 @@ export function SettingsView() {
         <h1>Settings</h1>
       </div>
 
-      <div className="settings-group">
+      <div className={styles.group}>
         <h2>Dashboard</h2>
         <label className="field">
           <span>Show anything due within (days)</span>
@@ -116,7 +117,7 @@ export function SettingsView() {
         </label>
       </div>
 
-      <div className="settings-group">
+      <div className={styles.group}>
         <h2>Email reminders</h2>
         <p className="settings-hint">
           A daily job emails you before anything is due — even when the app is
@@ -174,7 +175,7 @@ export function SettingsView() {
         )}
       </div>
 
-      <div className="settings-group">
+      <div className={styles.group}>
         <h2>Backup</h2>
         <p className="settings-hint">
           Export a copy of your data, or restore it from a previous backup.

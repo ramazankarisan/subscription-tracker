@@ -5,6 +5,7 @@
 import { useEffect, type ReactNode } from 'react';
 
 import { CloseIcon } from './icons';
+import styles from './Modal.module.css';
 
 interface ModalProps {
   title: string;
@@ -24,15 +25,15 @@ export function Modal({ title, onClose, children }: ModalProps) {
   }, [onClose]);
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className={styles.backdrop} onClick={onClose}>
       <div
-        className="modal"
+        className={styles.modal}
         role="dialog"
         aria-modal="true"
         aria-label={title}
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="modal-header">
+        <header className={styles.header}>
           <h2>{title}</h2>
           <button
             type="button"
@@ -43,7 +44,7 @@ export function Modal({ title, onClose, children }: ModalProps) {
             <CloseIcon size={20} />
           </button>
         </header>
-        <div className="modal-body">{children}</div>
+        <div className={styles.body}>{children}</div>
       </div>
     </div>
   );
