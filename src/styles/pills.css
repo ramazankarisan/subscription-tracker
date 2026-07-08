@@ -11,16 +11,16 @@
 }
 
 .pill-ok {
-  color: var(--ok);
+  color: var(--ok-text);
   background: var(--ok-soft);
 }
 
 .pill-soon {
-  color: var(--warn);
+  color: var(--warn-text);
   background: var(--warn-soft);
 }
 
 .pill-overdue {
-  color: var(--danger);
+  color: var(--danger-text);
   background: var(--danger-soft);
 }

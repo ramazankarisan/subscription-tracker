@@ -114,7 +114,11 @@ function SignIn() {
           <p className="settings-hint" style={{ textAlign: 'center' }}>
             Sign in with a one-time email code — no password to remember.
           </p>
-          <form onSubmit={sendCode} style={{ width: '100%', maxWidth: 320 }}>
+          <form
+            onSubmit={sendCode}
+            className="form"
+            style={{ width: '100%', maxWidth: 320 }}
+          >
             <label className="field">
               <span>Email</span>
               <input
@@ -143,7 +147,11 @@ function SignIn() {
             Enter the code from the email. On iPhone, typing the code works in
             the installed app (the link often doesn't).
           </p>
-          <form onSubmit={verifyCode} style={{ width: '100%', maxWidth: 320 }}>
+          <form
+            onSubmit={verifyCode}
+            className="form"
+            style={{ width: '100%', maxWidth: 320 }}
+          >
             <label className="field">
               <span>Code</span>
               <input

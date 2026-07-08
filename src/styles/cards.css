@@ -36,6 +36,9 @@
 .card-title {
   font-size: 17px;
   font-weight: 650;
+  /* Let a long name shrink/wrap instead of pushing the amount off-screen. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .card-amount {
