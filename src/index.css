@@ -24,6 +24,14 @@
 
   --radius: 14px;
   --radius-sm: 10px;
+
+  /* Spacing scale (DESIGN.md §spacing). Use these instead of magic px. */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 18px;
+  --space-2xl: 24px;
   --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   color-scheme: light dark;

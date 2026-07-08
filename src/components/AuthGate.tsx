@@ -104,7 +104,7 @@ function SignIn() {
 
   return (
     <Centered>
-      <div className="app-brand" style={{ marginBottom: 8 }}>
+      <div className="app-brand" style={{ marginBottom: 'var(--space-sm)' }}>
         <BellIcon size={26} />
         <span>SubTrack</span>
       </div>
@@ -210,7 +210,7 @@ function SignIn() {
 function ConfigNeeded() {
   return (
     <Centered>
-      <div className="app-brand" style={{ marginBottom: 8 }}>
+      <div className="app-brand" style={{ marginBottom: 'var(--space-sm)' }}>
         <BellIcon size={26} />
         <span>SubTrack</span>
       </div>
@@ -236,8 +236,8 @@ function Centered({ children }: { children: ReactNode }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 12,
-        padding: 24,
+        gap: 'var(--space-md)',
+        padding: 'var(--space-2xl)',
       }}
     >
       {children}
