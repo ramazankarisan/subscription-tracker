@@ -23,6 +23,7 @@ import {
 } from 'react';
 
 import { advanceByCycle, rollForwardToFuture } from '../lib/dates';
+import { demoData, isDemo } from '../lib/demo';
 import {
   installmentToRow,
   rowToInstallment,
@@ -75,6 +76,8 @@ interface AppDataContextValue {
 
   updateSettings: (patch: Partial<AppSettings>) => void;
   replaceData: (data: AppData) => void;
+  /** Email a preview now; resolves to an error message, or null on success. */
+  sendTestEmail: () => Promise<string | null>;
   signOut: () => Promise<void>;
 }
 
@@ -96,7 +99,9 @@ export function AppDataProvider({
   children: ReactNode;
 }) {
   const cacheKey = cacheKeyForUser(user.id);
-  const [data, setData] = useState<AppData>(() => loadData(cacheKey));
+  const [data, setData] = useState<AppData>(() =>
+    isDemo ? demoData() : loadData(cacheKey),
+  );
   const [loading, setLoading] = useState(true);
   const [syncError, setSyncError] = useState<string | null>(null);
 
@@ -131,6 +136,10 @@ export function AppDataProvider({
   // keep the cached data.
   const fetchAll = useCallback(
     async (first: boolean) => {
+      if (isDemo) {
+        setLoading(false);
+        return;
+      }
       fetchInFlightRef.current = true;
       try {
         const [subs, insts, settingsResponse] = await Promise.all([
@@ -217,6 +226,9 @@ export function AppDataProvider({
   // Wrap every write: count it in flight; on failure refetch + show banner.
   const persist = useCallback(
     (run: () => PromiseLike<{ error: unknown }>) => {
+      if (isDemo) {
+        return; // local state only
+      }
       pendingWritesRef.current += 1;
       void (async () => {
         try {
@@ -291,6 +303,9 @@ export function AppDataProvider({
   // user-filtered; DELETE can't be (Supabase limitation), so it's unfiltered —
   // fine, the refetch is RLS-guarded. Refetch on SUBSCRIBED to catch up misses.
   useEffect(() => {
+    if (isDemo) {
+      return;
+    }
     const channel = supabase.channel(`appdata:${user.id}`);
     const tables = ['subscriptions', 'installments', 'app_settings'] as const;
     for (const table of tables) {
@@ -525,8 +540,28 @@ export function AppDataProvider({
     [apply, persist, user.id],
   );
 
+  const sendTestEmail = useCallback(async () => {
+    if (isDemo) {
+      return 'Email is turned off in the demo.';
+    }
+    const { error } = await supabase.functions.invoke('send-reminders', {
+      body: { test: true },
+    });
+    if (!error) {
+      return null;
+    }
+    return error instanceof Error
+      ? error.message
+      : 'Failed to send test email.';
+  }, []);
+
   // Drop this user's offline cache too, so a shared device keeps no data.
+  // In the demo, "signing out" just resets the sample data.
   const signOut = useCallback(async () => {
+    if (isDemo) {
+      window.location.reload();
+      return;
+    }
     await supabase.auth.signOut();
     clearData(cacheKey);
   }, [cacheKey]);
@@ -552,6 +587,7 @@ export function AppDataProvider({
       markInstallmentUnpaid,
       updateSettings,
       replaceData,
+      sendTestEmail,
       signOut,
     }),
     [
@@ -571,6 +607,7 @@ export function AppDataProvider({
       markInstallmentUnpaid,
       updateSettings,
       replaceData,
+      sendTestEmail,
       signOut,
     ],
   );

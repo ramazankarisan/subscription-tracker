@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
   /** Legacy anon key (eyJ…) — still accepted as a fallback. */
   readonly VITE_SUPABASE_ANON_KEY?: string;
+  /** `1` = demo mode: synthetic data, no backend (see src/lib/demo.ts). */
+  readonly VITE_DEMO?: string;
 }
 
 interface ImportMeta {
