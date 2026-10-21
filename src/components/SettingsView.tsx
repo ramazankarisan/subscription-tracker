@@ -16,7 +16,7 @@ import {
   type PasskeySummary,
 } from '../lib/passkeys';
 import { exportData } from '../lib/storage';
-import { supabase } from '../lib/supabase';
+import { isDemo } from '../lib/demo';
 import { useAppData } from '../state/useAppData';
 import type { AppData } from '../types';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -68,8 +68,15 @@ function parseLeadDays(draft: string): number | null {
 }
 
 export function SettingsView() {
-  const { data, settings, updateSettings, replaceData, userEmail, signOut } =
-    useAppData();
+  const {
+    data,
+    settings,
+    updateSettings,
+    replaceData,
+    sendTestEmail,
+    userEmail,
+    signOut,
+  } = useAppData();
 
   const [testState, setTestState] = useState<TestState>('idle');
   const [testMessage, setTestMessage] = useState('');
@@ -86,7 +93,7 @@ export function SettingsView() {
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const supportsPasskeys = passkeysSupported();
+  const supportsPasskeys = !isDemo && passkeysSupported();
   const [passkeys, setPasskeys] = useState<PasskeySummary[]>([]);
   const [passkeyState, setPasskeyState] = useState<PasskeyState>('idle');
   const [passkeyMessage, setPasskeyMessage] = useState('');
@@ -197,14 +204,10 @@ export function SettingsView() {
   const handleTestSend = async () => {
     setTestState('sending');
     setTestMessage('');
-    const { error } = await supabase.functions.invoke('send-reminders', {
-      body: { test: true },
-    });
+    const error = await sendTestEmail();
     if (error) {
       setTestState('error');
-      setTestMessage(
-        error instanceof Error ? error.message : 'Failed to send test email.',
-      );
+      setTestMessage(error);
     } else {
       setTestState('sent');
       setTestMessage(

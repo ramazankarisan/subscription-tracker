@@ -256,7 +256,8 @@ function ConfigNeeded() {
         Backend not configured. Set <code>VITE_SUPABASE_URL</code> and{' '}
         <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> (see{' '}
         <code>docs/supabase-setup.md</code>
-        ), then reload.
+        ), then reload. Or run <code>pnpm dev:demo</code> to try it with sample
+        data.
       </p>
     </Centered>
   );

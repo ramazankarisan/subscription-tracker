@@ -8,6 +8,7 @@ import { SettingsView } from './components/SettingsView';
 import { SubscriptionsView } from './components/SubscriptionsView';
 import { TabBar, type TabId } from './components/TabBar';
 import { BellIcon } from './components/icons';
+import { demoUser, isDemo } from './lib/demo';
 import { AppDataProvider, useAppData } from './state/useAppData';
 
 function AppShell() {
@@ -20,6 +21,14 @@ function AppShell() {
         <div className="app-brand">
           <BellIcon size={22} />
           <span>SubTrack</span>
+          {isDemo && (
+            <span
+              className="pill pill-soon"
+              title="Sample data, resets on reload"
+            >
+              Demo
+            </span>
+          )}
         </div>
       </header>
 
@@ -53,6 +62,13 @@ function AppShell() {
 }
 
 export default function App() {
+  if (isDemo) {
+    return (
+      <AppDataProvider user={demoUser}>
+        <AppShell />
+      </AppDataProvider>
+    );
+  }
   return (
     <AuthGate>
       {(user) => (

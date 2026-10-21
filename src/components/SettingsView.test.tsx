@@ -6,7 +6,6 @@ import { defaultSettings, emptyData } from '../lib/storage';
 import type { AppSettings } from '../types';
 import { SettingsView } from './SettingsView';
 
-vi.mock('../lib/supabase', () => ({ supabase: {} }));
 vi.mock('../lib/passkeys', () => ({ passkeysSupported: () => false }));
 
 // A stateful stand-in for the store: every updateSettings call is recorded

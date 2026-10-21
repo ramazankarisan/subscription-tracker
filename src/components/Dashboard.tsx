@@ -10,7 +10,6 @@ import { formatDate, relativeDayLabel } from '../lib/dates';
 import { formatCurrency } from '../lib/format';
 import { monthlyEquivalent } from '../lib/money';
 import { getDueItems, type DueItem } from '../lib/reminders';
-import { supabase } from '../lib/supabase';
 import { useAppData } from '../state/useAppData';
 import type { TabId } from './TabBar';
 import { CardIcon, InstallmentsIcon, MailIcon } from './icons';
@@ -23,7 +22,8 @@ export function Dashboard({
 }: {
   onNavigate: (tab: TabId) => void;
 }) {
-  const { data, subscriptions, installments, settings } = useAppData();
+  const { data, subscriptions, installments, settings, sendTestEmail } =
+    useAppData();
   const leadDays = settings.reminderLeadDays;
 
   const [sendState, setSendState] = useState<SendState>('idle');
@@ -58,12 +58,10 @@ export function Dashboard({
   const handleSendNow = async () => {
     setSendState('sending');
     setSendError('');
-    const { error } = await supabase.functions.invoke('send-reminders', {
-      body: { test: true },
-    });
+    const error = await sendTestEmail();
     if (error) {
       setSendState('error');
-      setSendError(error instanceof Error ? error.message : 'Failed to send');
+      setSendError(error);
     } else {
       setSendState('sent');
     }
