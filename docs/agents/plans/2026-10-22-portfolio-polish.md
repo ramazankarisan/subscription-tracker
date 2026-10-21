@@ -4,7 +4,7 @@ git_commit: b2e4e6c
 branch: main
 topic: 'Portfolio polish: bugs, boundaries, demo mode, docs, UI'
 tags: [plan, settings, backup, demo, docs, ui]
-status: in-progress
+status: phases 1-6 merged; phase 7 awaiting owner approval
 ---
 
 # PLAN: Portfolio polish
@@ -175,4 +175,17 @@ green: eslint, prettier, tsc, vitest, knip, jscpd, secretlint, build.
 
 ## Implementation Notes
 
-(filled in as phases land)
+- Every code PR got an independent review pass from a subagent before merge.
+  Findings were fixed in the same PR:
+  - #35: reused ids collide (fresh ids now), `parseISO` accepts `2026-07`,
+    no int4 bound. That fixes the "other account's backup" item above.
+  - #36: stale error, per-keystroke upserts out of order, edit lost on unmount.
+  - #39: demo built the real client when `.env` existed; the seed was only
+    tested on one date.
+- Found while driving the app (#38): without `.env` the page was blank, because
+  `createClient('')` throws at import. Fixed with a red test first.
+- Moved to the low list: a refetch that started before an edit can briefly
+  revert it (store-level race).
+- Product/security items went to `docs/decisions.md`, not code.
+- Real email in old screenshots: replaced in phase 6, but it's still in git
+  history. Owner's call (history rewrite = force-push to `main`).
