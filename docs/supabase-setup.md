@@ -1,4 +1,4 @@
-# Phase 2 setup — Supabase + Brevo + GitHub Pages
+# Setup: Supabase + Brevo + GitHub Pages
 
 Everything below is free and personal-scoped. 🔓 = safe to expose · 🔒 = secret,
 never commit. You do the dashboard steps; the code is already in the repo.
@@ -12,7 +12,7 @@ never commit. You do the dashboard steps; the code is already in the repo.
    - **Project URL** 🔓 → `VITE_SUPABASE_URL`
      — always `https://<ref>.supabase.co`. If you can't find it, `<ref>` is the
      string in your browser address bar after `/project/`.
-   - **Publishable key** 🔓 → `VITE_SUPABASE_ANON_KEY`
+   - **Publishable key** 🔓 → `VITE_SUPABASE_PUBLISHABLE_KEY`
      — new projects show a **Publishable key** (`sb_publishable_…`); older ones
      show **anon public** (`eyJ…`) under **Settings → API Keys → Legacy API
      Keys**. Either works — same low privileges, same RLS.
@@ -115,7 +115,7 @@ The daily query also keeps the free project from idling.
 
 ## 5. Frontend env (local + GitHub Pages)
 
-- **Local**: copy `.env.example` → `.env`, fill in the URL + anon key, `pnpm dev`.
+- **Local**: copy `.env.example` → `.env`, fill in the URL + publishable key, `pnpm dev`.
 - **GitHub Pages**: repo **Settings → Secrets and variables → Actions →
   Variables** → add `VITE_SUPABASE_URL` 🔓 and `VITE_SUPABASE_PUBLISHABLE_KEY`
   🔓 (or `VITE_SUPABASE_ANON_KEY` for a legacy key).

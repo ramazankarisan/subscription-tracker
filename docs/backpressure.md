@@ -25,6 +25,7 @@ and `jscpd` which were added deliberately.
 |                           | lint                        | `eslint --max-warnings 0` on staged `src/**/*.ts,tsx`  | yes            |
 |                           | secrets                     | `secretlint` on staged                                 | yes            |
 | **pre-push** (lefthook)   | typecheck                   | `tsc -b --noEmit`                                      | yes            |
+|                           | test                        | `vitest run`                                           | yes            |
 |                           | dead code                   | `knip --production --strict`                           | yes            |
 |                           | duplication                 | `jscpd -c .jscpd.json src`                             | yes            |
 |                           | build                       | `vite build`                                           | yes            |
