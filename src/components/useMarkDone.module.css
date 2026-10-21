@@ -9,6 +9,11 @@
   pointer-events: none;
 }
 
+/* Focus parks here after Undo; the region itself has no visible box. */
+.region:focus {
+  outline: none;
+}
+
 .toast {
   display: flex;
   align-items: center;

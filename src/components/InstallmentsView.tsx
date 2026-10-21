@@ -40,7 +40,7 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
     deleteInstallment,
     markInstallmentUnpaid,
   } = useAppData();
-  const { pay, toast } = useMarkDone();
+  const { pay, dismiss, toast } = useMarkDone();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Installment | null>(null);
@@ -51,6 +51,7 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
     setIsFormOpen(true);
   };
   const openEdit = (installment: Installment) => {
+    dismiss();
     setEditing(installment);
     setIsFormOpen(true);
   };
@@ -180,7 +181,10 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
                   {installment.paidPayments > 0 && (
                     <button
                       className="icon-button"
-                      onClick={() => markInstallmentUnpaid(installment.id)}
+                      onClick={() => {
+                        dismiss();
+                        markInstallmentUnpaid(installment.id);
+                      }}
                       aria-label={`Undo last payment for ${installment.name}`}
                       title="Undo last payment"
                     >
@@ -196,7 +200,10 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
                   </button>
                   <button
                     className="icon-button icon-button-danger"
-                    onClick={() => setPendingDelete(installment)}
+                    onClick={() => {
+                      dismiss();
+                      setPendingDelete(installment);
+                    }}
                     aria-label={`Delete ${installment.name}`}
                   >
                     <TrashIcon size={18} />

@@ -14,21 +14,31 @@ const store = {
   markSubscriptionRenewed: vi.fn(),
   updateSubscription: vi.fn(),
   markInstallmentPaid: vi.fn(),
-  markInstallmentUnpaid: vi.fn(),
+  updateInstallment: vi.fn(),
 };
 vi.mock('../state/useAppData', () => ({ useAppData: () => store }));
 
+const { subscriptions, installments } = demoData(new Date('2026-07-01'));
+const netflix = subscriptions[0];
+const laptop = installments[0];
+const paidOff = installments[2];
+
 function Harness() {
-  const { renew, pay, toast } = useMarkDone();
-  const { subscriptions, installments } = demoData();
+  const { renew, pay, dismiss, toast } = useMarkDone();
   return (
     <>
-      <button onClick={() => renew(subscriptions[0])}>renew</button>
-      <button onClick={() => pay(installments[0])}>pay</button>
+      <button onClick={() => renew(netflix)}>renew</button>
+      <button onClick={() => pay(laptop)}>pay</button>
+      <button onClick={() => pay(paidOff)}>pay paid-off</button>
+      <button onClick={dismiss}>edit</button>
       {toast}
     </>
   );
 }
+
+const notice = () => screen.getByRole('status').textContent;
+const click = (name: string) =>
+  fireEvent.click(screen.getByRole('button', { name }));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -38,33 +48,65 @@ afterEach(cleanup);
 
 describe('useMarkDone', () => {
   it('renews, says so, and Undo restores the previous date', () => {
-    const netflix = demoData().subscriptions[0];
-    fireEvent.click(screen.getByText('renew'));
+    click('renew');
     expect(store.markSubscriptionRenewed).toHaveBeenCalledWith(netflix.id);
-    expect(screen.getByRole('status').textContent).toMatch(
-      /Netflix marked renewed/,
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(notice()).toMatch(/Netflix marked renewed/);
+    click('Undo');
     expect(store.updateSubscription).toHaveBeenCalledWith(netflix.id, {
       nextRenewal: netflix.nextRenewal,
     });
-    expect(screen.getByRole('status').textContent).toBe('');
+    expect(notice()).toBe('');
   });
 
-  it('marks a payment paid and Undo takes it back', () => {
-    fireEvent.click(screen.getByText('pay'));
-    expect(screen.getByRole('status').textContent).toMatch(
-      /payment 5 of 12 marked paid/,
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(store.markInstallmentUnpaid).toHaveBeenCalledOnce();
+  it('marks a payment paid and Undo restores the previous count', () => {
+    click('pay');
+    expect(store.markInstallmentPaid).toHaveBeenCalledWith(laptop.id);
+    expect(notice()).toMatch(/payment 5 of 12 marked paid/);
+    click('Undo');
+    expect(store.updateInstallment).toHaveBeenCalledWith(laptop.id, {
+      paidPayments: 4,
+    });
   });
 
-  it('hides the notice after a few seconds', () => {
-    fireEvent.click(screen.getByText('renew'));
+  it('does nothing for a plan that is already paid off', () => {
+    click('pay paid-off');
+    expect(store.markInstallmentPaid).not.toHaveBeenCalled();
+    expect(notice()).toBe('');
+  });
+
+  it('drops the undo once the item is edited another way', () => {
+    click('renew');
+    click('edit');
+    expect(notice()).toBe('');
+  });
+
+  it('a second action replaces the notice and restarts the timer', () => {
+    click('renew');
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+    click('pay');
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+    expect(notice()).toMatch(/Laptop/);
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(notice()).toBe('');
+  });
+
+  it('stays while focused, then hides a few seconds after', () => {
+    click('renew');
+    fireEvent.focus(screen.getByRole('button', { name: 'Undo' }));
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
+    expect(notice()).toMatch(/Netflix/);
+    fireEvent.blur(screen.getByRole('button', { name: 'Undo' }));
     act(() => {
       vi.advanceTimersByTime(6000);
     });
-    expect(screen.getByRole('status').textContent).toBe('');
+    expect(notice()).toBe('');
   });
 });

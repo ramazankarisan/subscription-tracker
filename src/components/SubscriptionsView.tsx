@@ -41,7 +41,7 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
     updateSubscription,
     deleteSubscription,
   } = useAppData();
-  const { renew, toast } = useMarkDone();
+  const { renew, dismiss, toast } = useMarkDone();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Subscription | null>(null);
@@ -52,6 +52,7 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
     setIsFormOpen(true);
   };
   const openEdit = (subscription: Subscription) => {
+    dismiss();
     setEditing(subscription);
     setIsFormOpen(true);
   };
@@ -154,7 +155,10 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
                   </button>
                   <button
                     className="icon-button icon-button-danger"
-                    onClick={() => setPendingDelete(subscription)}
+                    onClick={() => {
+                      dismiss();
+                      setPendingDelete(subscription);
+                    }}
                     aria-label={`Delete ${subscription.name}`}
                   >
                     <TrashIcon size={18} />
