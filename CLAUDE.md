@@ -26,8 +26,9 @@ pnpm test:watch # vitest in watch mode
 `*.test.ts` and cover the **pure logic in `src/lib`** (dates, reminders,
 currency formatting, DB↔domain mappers) — the calendar math and the "what's
 due" rules are the parts worth protecting. They run in the `node` environment
-(no DOM). React components are not unit-tested; the app is verified by driving
-it (see the `verify` skill).
+(no DOM). Components are verified by driving the app; a component bug gets a
+regression test in a colocated `*.test.tsx` that opts into jsdom
+(`// @vitest-environment jsdom`, Testing Library).
 
 - **Add a test with any change to `src/lib` logic** — a new date rule, a
   reminder edge case, a mapper column. Match the existing files' style.

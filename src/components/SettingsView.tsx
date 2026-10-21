@@ -35,6 +35,21 @@ const OFFSET_CHOICES: Array<{ value: number; label: string }> = [
   { value: 7, label: '7 days before' },
 ];
 
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_LEAD_DAYS = 365;
+
+// Local edit state that follows the stored value whenever it changes (a save,
+// another device), so typing never writes half-finished input.
+function useDraft(stored: string) {
+  const [draft, setDraft] = useState(stored);
+  const [synced, setSynced] = useState(stored);
+  if (synced !== stored) {
+    setSynced(stored);
+    setDraft(stored);
+  }
+  return [draft, setDraft] as const;
+}
+
 export function SettingsView() {
   const { data, settings, updateSettings, replaceData, userEmail, signOut } =
     useAppData();
@@ -47,6 +62,11 @@ export function SettingsView() {
   const [importMessage, setImportMessage] = useState('');
   const [pendingImport, setPendingImport] = useState<AppData | null>(null);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [recipientDraft, setRecipientDraft] = useDraft(settings.recipientEmail);
+  const [recipientError, setRecipientError] = useState('');
+  const [leadDaysDraft, setLeadDaysDraft] = useDraft(
+    String(settings.reminderLeadDays),
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const supportsPasskeys = passkeysSupported();
@@ -114,6 +134,34 @@ export function SettingsView() {
       set.add(value);
     }
     updateSettings({ reminderOffsets: [...set].sort((a, b) => b - a) });
+  };
+
+  // Save on blur, and only a valid address; blank falls back to the account.
+  const commitRecipient = () => {
+    const next = recipientDraft.trim() || userEmail;
+    if (!EMAIL.test(next)) {
+      setRecipientError('Enter a valid email address.');
+      return;
+    }
+    setRecipientError('');
+    setRecipientDraft(next);
+    if (next !== settings.recipientEmail) {
+      updateSettings({ recipientEmail: next });
+    }
+  };
+
+  // Save each whole number as typed; a blank field isn't saved and reverts on blur.
+  const changeLeadDays = (value: string) => {
+    setLeadDaysDraft(value);
+    const days = Number(value);
+    if (
+      value !== '' &&
+      Number.isInteger(days) &&
+      days >= 0 &&
+      days <= MAX_LEAD_DAYS
+    ) {
+      updateSettings({ reminderLeadDays: days });
+    }
   };
 
   const handleTestSend = async () => {
@@ -203,12 +251,10 @@ export function SettingsView() {
             type="number"
             inputMode="numeric"
             min="0"
-            value={settings.reminderLeadDays}
-            onChange={(event) =>
-              updateSettings({
-                reminderLeadDays: Math.max(0, Number(event.target.value) || 0),
-              })
-            }
+            max={MAX_LEAD_DAYS}
+            value={leadDaysDraft}
+            onChange={(event) => changeLeadDays(event.target.value)}
+            onBlur={() => setLeadDaysDraft(String(settings.reminderLeadDays))}
           />
         </label>
       </div>
@@ -281,13 +327,23 @@ export function SettingsView() {
           <span>Send reminders to</span>
           <input
             type="email"
-            value={settings.recipientEmail}
-            onChange={(event) =>
-              updateSettings({ recipientEmail: event.target.value })
-            }
-            placeholder="you@example.com"
+            value={recipientDraft}
+            onChange={(event) => setRecipientDraft(event.target.value)}
+            onBlur={commitRecipient}
+            placeholder={userEmail || 'you@example.com'}
+            aria-invalid={recipientError !== ''}
+            aria-describedby={recipientError ? 'recipient-error' : undefined}
           />
         </label>
+        {recipientError && (
+          <p
+            id="recipient-error"
+            className="email-status email-status-error"
+            role="alert"
+          >
+            {recipientError}
+          </p>
+        )}
 
         <span className="field-label">Remind me…</span>
         <div className="chip-row">
