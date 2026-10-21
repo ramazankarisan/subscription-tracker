@@ -7,6 +7,8 @@
  */
 import { createClient } from '@supabase/supabase-js';
 
+import { isDemo } from './demo';
+
 const url = import.meta.env.VITE_SUPABASE_URL;
 // Supabase's current name is the publishable key; fall back to the legacy anon
 // key so either works (both are public and carry the same low privileges).
@@ -15,13 +17,14 @@ const publishableKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 /** False until the two env vars are set — the UI shows a setup hint in that case. */
-export const isSupabaseConfigured = Boolean(url && publishableKey);
+export const isSupabaseConfigured = Boolean(url && publishableKey) && !isDemo;
 
 // createClient throws on an empty URL; a placeholder keeps the module loadable
-// so AuthGate can show its setup hint. Nothing calls it while unconfigured.
+// so AuthGate can show its setup hint. Nothing calls it while unconfigured, and
+// the demo never reaches the real project even when .env is set.
 export const supabase = createClient(
-  url || 'http://localhost',
-  publishableKey || 'unconfigured',
+  (isSupabaseConfigured && url) || 'http://localhost',
+  (isSupabaseConfigured && publishableKey) || 'unconfigured',
   {
     auth: {
       persistSession: true,

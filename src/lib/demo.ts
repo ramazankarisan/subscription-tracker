@@ -19,7 +19,8 @@ export const demoUser: AuthedUser = {
 /** Seed data with dates relative to `today`, so something is always due soon. */
 export function demoData(today = new Date()): AppData {
   const day = (offset: number) => format(addDays(today, offset), 'yyyy-MM-dd');
-  // First payment chosen so payment `paid + 1` falls `dueIn` days from today.
+  // First payment chosen so payment `paid + 1` falls about `dueIn` days out
+  // (month-end clamping can pull it up to 3 days earlier).
   const planStart = (paid: number, dueIn: number) =>
     format(addMonths(addDays(today, dueIn), -paid), 'yyyy-MM-dd');
   const subscription = {
