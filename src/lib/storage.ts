@@ -64,6 +64,15 @@ export function saveData(key: string, data: AppData): void {
   }
 }
 
+/** Remove cached state for a user (on sign-out). */
+export function clearData(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Storage unavailable — nothing cached to remove.
+  }
+}
+
 /** Export the raw JSON string for backup. */
 export function exportData(data: AppData): string {
   return JSON.stringify(data, null, 2);

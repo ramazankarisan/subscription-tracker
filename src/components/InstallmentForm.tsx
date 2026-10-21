@@ -68,6 +68,9 @@ export function InstallmentForm({
           type="text"
           value={name}
           onChange={(event) => setName(event.target.value)}
+          // `required` alone accepts a name of only spaces.
+          pattern=".*\S.*"
+          title="Enter a name"
           placeholder="New phone"
           required
         />

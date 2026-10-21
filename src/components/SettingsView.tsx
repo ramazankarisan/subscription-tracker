@@ -104,8 +104,7 @@ export function SettingsView() {
     }
   }, [supportsPasskeys]);
 
-  // Default the reminder recipient to the signed-in account — on the free tier
-  // that's the only address that can actually receive mail.
+  // Default an empty reminder recipient (older settings rows) to the account.
   useEffect(() => {
     if (!settings.recipientEmail && userEmail) {
       updateSettings({ recipientEmail: userEmail });
@@ -350,8 +349,8 @@ export function SettingsView() {
         <h2>Email reminders</h2>
         <p className="settings-hint">
           A daily job emails you before anything is due — even when the app is
-          closed. Reminders go to your account email by default; on the free
-          tier that's the only address they can reach.
+          closed. Reminders go to your account email unless you set another
+          address below.
         </p>
 
         <label className="field">
@@ -410,6 +409,7 @@ export function SettingsView() {
             className={`email-status ${
               testState === 'error' ? 'email-status-error' : 'email-status-ok'
             }`}
+            role={testState === 'error' ? 'alert' : 'status'}
           >
             {testMessage}
           </p>
