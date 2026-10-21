@@ -138,7 +138,7 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
                       href={subscription.cancelUrl}
                       target="_blank"
                       rel="noreferrer"
-                      aria-label="Open cancel page"
+                      aria-label={`Open cancel page for ${subscription.name}`}
                       title="Open cancel page"
                     >
                       <ExternalLinkIcon size={18} />
@@ -147,14 +147,14 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
                   <button
                     className="icon-button"
                     onClick={() => openEdit(subscription)}
-                    aria-label="Edit"
+                    aria-label={`Edit ${subscription.name}`}
                   >
                     <EditIcon size={18} />
                   </button>
                   <button
                     className="icon-button icon-button-danger"
                     onClick={() => setPendingDelete(subscription)}
-                    aria-label="Delete"
+                    aria-label={`Delete ${subscription.name}`}
                   >
                     <TrashIcon size={18} />
                   </button>

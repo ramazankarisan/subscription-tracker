@@ -34,7 +34,13 @@ import {
   type SettingsRow,
   type SubscriptionRow,
 } from '../lib/mappers';
-import { cacheKeyForUser, emptyData, loadData, saveData } from '../lib/storage';
+import {
+  cacheKeyForUser,
+  clearData,
+  emptyData,
+  loadData,
+  saveData,
+} from '../lib/storage';
 import { supabase } from '../lib/supabase';
 import type { AppData, AppSettings, Installment, Subscription } from '../types';
 
@@ -519,9 +525,11 @@ export function AppDataProvider({
     [apply, persist, user.id],
   );
 
+  // Drop this user's offline cache too, so a shared device keeps no data.
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
-  }, []);
+    clearData(cacheKey);
+  }, [cacheKey]);
 
   const value = useMemo<AppDataContextValue>(
     () => ({

@@ -158,7 +158,7 @@ export function Dashboard({
             <MailIcon size={18} /> Set up email reminders
           </button>
         ) : sendState === 'sent' ? (
-          <p className="email-status email-status-ok">
+          <p className="email-status email-status-ok" role="status">
             Test email sent to {settings.recipientEmail}. Reminders are on.
           </p>
         ) : (
@@ -176,7 +176,9 @@ export function Dashboard({
               {sendState === 'sending' ? 'Sending…' : 'Send me a test email'}
             </button>
             {sendState === 'error' && (
-              <p className="email-status email-status-error">{sendError}</p>
+              <p className="email-status email-status-error" role="alert">
+                {sendError}
+              </p>
             )}
           </>
         )}

@@ -168,7 +168,7 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
                     <button
                       className="icon-button"
                       onClick={() => markInstallmentUnpaid(installment.id)}
-                      aria-label="Undo last payment"
+                      aria-label={`Undo last payment for ${installment.name}`}
                       title="Undo last payment"
                     >
                       <UndoIcon size={18} />
@@ -177,14 +177,14 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
                   <button
                     className="icon-button"
                     onClick={() => openEdit(installment)}
-                    aria-label="Edit"
+                    aria-label={`Edit ${installment.name}`}
                   >
                     <EditIcon size={18} />
                   </button>
                   <button
                     className="icon-button icon-button-danger"
                     onClick={() => setPendingDelete(installment)}
-                    aria-label="Delete"
+                    aria-label={`Delete ${installment.name}`}
                   >
                     <TrashIcon size={18} />
                   </button>
