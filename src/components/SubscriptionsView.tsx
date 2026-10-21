@@ -10,6 +10,7 @@ import type { BillingCycle, Subscription } from '../types';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Modal } from './Modal';
 import { SubscriptionForm } from './SubscriptionForm';
+import { useMarkDone } from './useMarkDone';
 import {
   CheckIcon,
   EditIcon,
@@ -39,8 +40,8 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
     addSubscription,
     updateSubscription,
     deleteSubscription,
-    markSubscriptionRenewed,
   } = useAppData();
+  const { renew, toast } = useMarkDone();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Subscription | null>(null);
@@ -127,10 +128,10 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
                 <div className="card-actions">
                   <button
                     className="button button-small"
-                    onClick={() => markSubscriptionRenewed(subscription.id)}
-                    title="Mark as renewed (advance to next date)"
+                    onClick={() => renew(subscription)}
+                    title="Advance to the next renewal date"
                   >
-                    <CheckIcon size={16} /> Renewed
+                    <CheckIcon size={16} /> Mark renewed
                   </button>
                   {subscription.cancelUrl && (
                     <a
@@ -164,6 +165,8 @@ export function SubscriptionsView({ leadDays }: { leadDays: number }) {
           })}
         </ul>
       )}
+
+      {toast}
 
       {isFormOpen && (
         <Modal

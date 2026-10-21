@@ -12,7 +12,8 @@ import { monthlyEquivalent } from '../lib/money';
 import { getDueItems, type DueItem } from '../lib/reminders';
 import { useAppData } from '../state/useAppData';
 import type { TabId } from './TabBar';
-import { CardIcon, InstallmentsIcon, MailIcon } from './icons';
+import { CardIcon, CheckIcon, InstallmentsIcon, MailIcon } from './icons';
+import { useMarkDone } from './useMarkDone';
 import styles from './Dashboard.module.css';
 
 type SendState = 'idle' | 'sending' | 'sent' | 'error';
@@ -26,6 +27,7 @@ export function Dashboard({
     useAppData();
   const leadDays = settings.reminderLeadDays;
 
+  const { renew, pay, toast } = useMarkDone();
   const [sendState, setSendState] = useState<SendState>('idle');
   const [sendError, setSendError] = useState('');
 
@@ -142,7 +144,15 @@ export function Dashboard({
       ) : (
         <ul className={styles.dueList}>
           {dueItems.map((item) => (
-            <DueRow key={`${item.kind}-${item.id}`} item={item} />
+            <DueRow
+              key={`${item.kind}-${item.id}`}
+              item={item}
+              onDone={() =>
+                item.kind === 'subscription'
+                  ? renew(item.subscription)
+                  : pay(item.installment)
+              }
+            />
           ))}
         </ul>
       )}
@@ -181,46 +191,43 @@ export function Dashboard({
           </>
         )}
       </div>
+
+      {toast}
     </section>
   );
 }
 
-function DueRow({ item }: { item: DueItem }) {
+function DueRow({ item, onDone }: { item: DueItem; onDone: () => void }) {
   const isOverdue = item.days < 0;
   const pillClass = isOverdue ? 'pill-overdue' : 'pill-soon';
+  const isSubscription = item.kind === 'subscription';
+  const name = isSubscription ? item.subscription.name : item.installment.name;
+  const action = isSubscription ? 'Mark renewed' : 'Mark paid';
 
-  if (item.kind === 'subscription') {
-    const { name, cost, currency } = item.subscription;
-    return (
-      <li className={styles.dueRow}>
-        <div className={styles.dueIcon}>
-          <CardIcon size={18} />
-        </div>
-        <div className={styles.dueText}>
-          <span className={styles.dueName}>{name}</span>
-          <span className={styles.dueSub}>
-            Renews {formatDate(item.dueDate)} · {formatCurrency(cost, currency)}
-          </span>
-        </div>
-        <span className={`pill ${pillClass}`}>
-          {relativeDayLabel(item.dueDate)}
-        </span>
-      </li>
-    );
-  }
-
-  const { name, amountPerPayment, currency, totalPayments } = item.installment;
   return (
     <li className={styles.dueRow}>
       <div className={styles.dueIcon}>
-        <InstallmentsIcon size={18} />
+        {isSubscription ? (
+          <CardIcon size={18} />
+        ) : (
+          <InstallmentsIcon size={18} />
+        )}
       </div>
       <div className={styles.dueText}>
         <span className={styles.dueName}>{name}</span>
         <span className={styles.dueSub}>
-          Payment {item.paymentNumber}/{totalPayments} ·{' '}
-          {formatCurrency(amountPerPayment, currency)}
+          {isSubscription
+            ? `Renews ${formatDate(item.dueDate)} · ${formatCurrency(item.subscription.cost, item.subscription.currency)}`
+            : `Payment ${item.paymentNumber}/${item.installment.totalPayments} · ${formatCurrency(item.installment.amountPerPayment, item.installment.currency)}`}
         </span>
+        <button
+          type="button"
+          className={`button button-small ${styles.dueAction}`}
+          onClick={onDone}
+          aria-label={`${action}: ${name}`}
+        >
+          <CheckIcon size={14} /> {action}
+        </button>
       </div>
       <span className={`pill ${pillClass}`}>
         {relativeDayLabel(item.dueDate)}

@@ -11,7 +11,7 @@ with an email code) · or run the demo locally with `pnpm dev:demo` (sample data
 no account)
 
 <p align="center">
-  <img src="docs/screenshots/demo.gif" alt="Demo: mark a subscription renewed, pay an installment, add a subscription" width="300">
+  <img src="docs/screenshots/demo.gif" alt="Demo: mark a renewal and a payment from Home (with undo), then add a subscription" width="300">
 </p>
 
 |                                Home                                |                            Subscriptions                            |                             Installments                             |                          Settings                           |

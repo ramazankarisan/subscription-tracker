@@ -16,8 +16,21 @@ import type { Installment } from '../types';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Modal } from './Modal';
 import { InstallmentForm } from './InstallmentForm';
+import { useMarkDone } from './useMarkDone';
 import { CheckIcon, EditIcon, PlusIcon, TrashIcon, UndoIcon } from './icons';
 import styles from './InstallmentsView.module.css';
+
+// Soonest payment first; fully paid plans last.
+function sortByNextPayment(installments: Installment[]): Installment[] {
+  const nextDay = (installment: Installment) =>
+    nextInstallmentDate(
+      installment.firstPaymentDate,
+      installment.paidPayments,
+      installment.totalPayments,
+      installment.intervalMonths,
+    ) ?? '9999-12-31';
+  return [...installments].sort((a, b) => nextDay(a).localeCompare(nextDay(b)));
+}
 
 export function InstallmentsView({ leadDays }: { leadDays: number }) {
   const {
@@ -25,9 +38,9 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
     addInstallment,
     updateInstallment,
     deleteInstallment,
-    markInstallmentPaid,
     markInstallmentUnpaid,
   } = useAppData();
+  const { pay, toast } = useMarkDone();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Installment | null>(null);
@@ -74,7 +87,7 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
         </p>
       ) : (
         <ul className="card-list">
-          {installments.map((installment) => {
+          {sortByNextPayment(installments).map((installment) => {
             const remaining =
               installment.totalPayments - installment.paidPayments;
             const isComplete = remaining <= 0;
@@ -158,10 +171,10 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
                   {!isComplete && (
                     <button
                       className="button button-small"
-                      onClick={() => markInstallmentPaid(installment.id)}
-                      title="Mark next payment as paid"
+                      onClick={() => pay(installment)}
+                      title="Mark the next payment as paid"
                     >
-                      <CheckIcon size={16} /> Paid one
+                      <CheckIcon size={16} /> Mark paid
                     </button>
                   )}
                   {installment.paidPayments > 0 && (
@@ -194,6 +207,8 @@ export function InstallmentsView({ leadDays }: { leadDays: number }) {
           })}
         </ul>
       )}
+
+      {toast}
 
       {isFormOpen && (
         <Modal
