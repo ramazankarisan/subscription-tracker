@@ -7,6 +7,7 @@
 import { format, parseISO } from 'date-fns';
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 
+import { parseBackup } from '../lib/backup';
 import {
   deletePasskey,
   listPasskeys,
@@ -153,22 +154,16 @@ export function SettingsView() {
     }
     const reader = new FileReader();
     reader.onload = () => {
-      try {
-        const parsed = JSON.parse(String(reader.result)) as AppData;
-        if (
-          Array.isArray(parsed.subscriptions) &&
-          Array.isArray(parsed.installments)
-        ) {
-          setImportState('idle');
-          setImportMessage('');
-          setPendingImport(parsed);
-        } else {
-          setImportState('error');
-          setImportMessage('That file does not look like a valid backup.');
-        }
-      } catch {
+      const parsed = parseBackup(String(reader.result));
+      if (parsed) {
+        setImportState('idle');
+        setImportMessage('');
+        setPendingImport(parsed);
+      } else {
         setImportState('error');
-        setImportMessage('Could not read that file.');
+        setImportMessage(
+          "That file isn't a valid SubTrack backup. Nothing was changed.",
+        );
       }
     };
     reader.readAsText(file);
