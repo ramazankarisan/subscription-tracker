@@ -35,6 +35,38 @@ const OFFSET_CHOICES: Array<{ value: number; label: string }> = [
   { value: 7, label: '7 days before' },
 ];
 
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_LEAD_DAYS = 365;
+
+// Local edit state that follows the stored value whenever it changes (a save,
+// another device), so typing never writes half-finished input.
+function useDraft(stored: string) {
+  const [draft, setDraft] = useState(stored);
+  const [synced, setSynced] = useState(stored);
+  if (synced !== stored) {
+    setSynced(stored);
+    setDraft(stored);
+  }
+  return [draft, setDraft] as const;
+}
+
+/** The address a draft would save (blank → the account), or null if invalid. */
+function parseRecipient(draft: string, fallback: string): string | null {
+  const next = draft.trim() || fallback;
+  return EMAIL.test(next) ? next : null;
+}
+
+/** The whole number of days a draft would save, or null if out of range. */
+function parseLeadDays(draft: string): number | null {
+  const days = Number(draft);
+  return draft.trim() !== '' &&
+    Number.isInteger(days) &&
+    days >= 0 &&
+    days <= MAX_LEAD_DAYS
+    ? days
+    : null;
+}
+
 export function SettingsView() {
   const { data, settings, updateSettings, replaceData, userEmail, signOut } =
     useAppData();
@@ -47,6 +79,11 @@ export function SettingsView() {
   const [importMessage, setImportMessage] = useState('');
   const [pendingImport, setPendingImport] = useState<AppData | null>(null);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [recipientDraft, setRecipientDraft] = useDraft(settings.recipientEmail);
+  const [recipientError, setRecipientError] = useState('');
+  const [leadDaysDraft, setLeadDaysDraft] = useDraft(
+    String(settings.reminderLeadDays),
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const supportsPasskeys = passkeysSupported();
@@ -115,6 +152,48 @@ export function SettingsView() {
     }
     updateSettings({ reminderOffsets: [...set].sort((a, b) => b - a) });
   };
+
+  // Drafts save on blur (one write, never half-typed input).
+  const commitRecipient = () => {
+    const next = parseRecipient(recipientDraft, userEmail);
+    if (next === null) {
+      setRecipientError('Enter a valid email address.');
+      return;
+    }
+    setRecipientDraft(next);
+    if (next !== settings.recipientEmail) {
+      updateSettings({ recipientEmail: next });
+    }
+  };
+  const commitLeadDays = () => {
+    const days = parseLeadDays(leadDaysDraft);
+    if (days === null) {
+      setLeadDaysDraft(String(settings.reminderLeadDays));
+    } else if (days !== settings.reminderLeadDays) {
+      updateSettings({ reminderLeadDays: days });
+    }
+  };
+
+  // Leaving the view may not blur the field (e.g. a tab tap on iOS), so save
+  // any valid pending edit on unmount, as one write.
+  const pendingRef = useRef(() => {});
+  useEffect(() => {
+    pendingRef.current = () => {
+      const patch: Partial<typeof settings> = {};
+      const recipient = parseRecipient(recipientDraft, userEmail);
+      if (recipient !== null && recipient !== settings.recipientEmail) {
+        patch.recipientEmail = recipient;
+      }
+      const days = parseLeadDays(leadDaysDraft);
+      if (days !== null && days !== settings.reminderLeadDays) {
+        patch.reminderLeadDays = days;
+      }
+      if (Object.keys(patch).length > 0) {
+        updateSettings(patch);
+      }
+    };
+  });
+  useEffect(() => () => pendingRef.current(), []);
 
   const handleTestSend = async () => {
     setTestState('sending');
@@ -203,12 +282,10 @@ export function SettingsView() {
             type="number"
             inputMode="numeric"
             min="0"
-            value={settings.reminderLeadDays}
-            onChange={(event) =>
-              updateSettings({
-                reminderLeadDays: Math.max(0, Number(event.target.value) || 0),
-              })
-            }
+            max={MAX_LEAD_DAYS}
+            value={leadDaysDraft}
+            onChange={(event) => setLeadDaysDraft(event.target.value)}
+            onBlur={commitLeadDays}
           />
         </label>
       </div>
@@ -281,13 +358,26 @@ export function SettingsView() {
           <span>Send reminders to</span>
           <input
             type="email"
-            value={settings.recipientEmail}
-            onChange={(event) =>
-              updateSettings({ recipientEmail: event.target.value })
-            }
-            placeholder="you@example.com"
+            value={recipientDraft}
+            onChange={(event) => {
+              setRecipientDraft(event.target.value);
+              setRecipientError('');
+            }}
+            onBlur={commitRecipient}
+            placeholder={userEmail || 'you@example.com'}
+            aria-invalid={recipientError !== ''}
+            aria-describedby={recipientError ? 'recipient-error' : undefined}
           />
         </label>
+        {recipientError && (
+          <p
+            id="recipient-error"
+            className="email-status email-status-error"
+            role="alert"
+          >
+            {recipientError}
+          </p>
+        )}
 
         <span className="field-label">Remind me…</span>
         <div className="chip-row">
