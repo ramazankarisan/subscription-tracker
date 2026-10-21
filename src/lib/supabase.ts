@@ -17,13 +17,19 @@ const publishableKey =
 /** False until the two env vars are set — the UI shows a setup hint in that case. */
 export const isSupabaseConfigured = Boolean(url && publishableKey);
 
-export const supabase = createClient(url ?? '', publishableKey ?? '', {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    // Complete the magic-link sign-in when the user lands back on the app.
-    detectSessionInUrl: true,
-    // Opt in to the beta passkey API (Face ID / Touch ID sign-in). See lib/passkeys.ts.
-    experimental: { passkey: true },
+// createClient throws on an empty URL; a placeholder keeps the module loadable
+// so AuthGate can show its setup hint. Nothing calls it while unconfigured.
+export const supabase = createClient(
+  url || 'http://localhost',
+  publishableKey || 'unconfigured',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      // Complete the magic-link sign-in when the user lands back on the app.
+      detectSessionInUrl: true,
+      // Opt in to the beta passkey API (Face ID / Touch ID sign-in). See lib/passkeys.ts.
+      experimental: { passkey: true },
+    },
   },
-});
+);
