@@ -36,6 +36,16 @@ const valid: AppData = {
   },
 };
 
+// Ids are always regenerated, so match any id.
+function anyIds(data: AppData) {
+  const anyId = { id: expect.any(String) as unknown };
+  return {
+    ...data,
+    subscriptions: data.subscriptions.map((item) => ({ ...item, ...anyId })),
+    installments: data.installments.map((item) => ({ ...item, ...anyId })),
+  };
+}
+
 // Overwrite one field of the first subscription / installment in a backup.
 function withSubscription(patch: Record<string, unknown>): string {
   return JSON.stringify({
@@ -52,7 +62,7 @@ function withInstallment(patch: Record<string, unknown>): string {
 
 describe('parseBackup', () => {
   it('accepts a file produced by Export', () => {
-    expect(parseBackup(exportData(valid))).toEqual(valid);
+    expect(parseBackup(exportData(valid))).toEqual(anyIds(valid));
   });
 
   it('rejects text that is not JSON', () => {
@@ -72,6 +82,9 @@ describe('parseBackup', () => {
     ['a negative cost', { cost: -1 }],
     ['an unknown cycle', { cycle: 'daily' }],
     ['an invalid renewal date', { nextRenewal: '2026-13-45' }],
+    ['a partial renewal date', { nextRenewal: '2026-07' }],
+    ['a custom cycle without an interval', { cycle: 'custom' }],
+    ['notes that are not text', { notes: 42 }],
   ])('rejects a subscription with %s', (_label, patch) => {
     expect(parseBackup(withSubscription(patch))).toBeNull();
   });
@@ -80,6 +93,7 @@ describe('parseBackup', () => {
     ['a fractional payment count', { totalPayments: 1.5 }],
     ['more paid than total', { paidPayments: 13 }],
     ['a zero interval', { intervalMonths: 0 }],
+    ['a count beyond a Postgres integer', { totalPayments: 3_000_000_000 }],
     ['a missing first payment date', { firstPaymentDate: undefined }],
   ])('rejects an installment with %s', (_label, patch) => {
     expect(parseBackup(withInstallment(patch))).toBeNull();
@@ -100,12 +114,16 @@ describe('parseBackup', () => {
     const parsed = parseBackup(
       JSON.stringify({ ...valid, subscriptions: [bare], settings: undefined }),
     );
-    expect(parsed?.subscriptions[0]).toEqual(valid.subscriptions[0]);
-    expect(parsed?.settings).toEqual(valid.settings);
+    expect(parsed).toEqual(anyIds(valid));
   });
 
-  it('gives a non-UUID id a fresh UUID (the id column is uuid)', () => {
-    const parsed = parseBackup(withSubscription({ id: 'sub-1' }));
-    expect(parsed?.subscriptions[0].id).toMatch(/^[\da-f-]{36}$/);
+  it('gives every item a fresh id, so restored rows never collide', () => {
+    const duplicate = valid.subscriptions[0];
+    const parsed = parseBackup(
+      JSON.stringify({ ...valid, subscriptions: [duplicate, duplicate] }),
+    );
+    const ids = parsed?.subscriptions.map((item) => item.id);
+    expect(new Set(ids).size).toBe(2);
+    expect(ids).not.toContain(duplicate.id);
   });
 });

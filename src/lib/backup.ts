@@ -4,6 +4,8 @@
  * Restore deletes the account's rows and then inserts the file's, so every
  * item must be valid up front: one bad row would fail the insert after the
  * delete already ran. Optional fields an older export may lack get defaults.
+ * Every item gets a fresh id: ids are global primary keys, so reusing them
+ * collides with duplicates in the file or with rows of another account.
  */
 import type {
   AppData,
@@ -24,7 +26,8 @@ const CYCLES = new Set<BillingCycle>([
   'yearly',
   'custom',
 ]);
-const UUID = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+const MAX_INT4 = 2_147_483_647; // Postgres `integer`
 
 function isFields(value: unknown): value is Fields {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -36,19 +39,21 @@ function isAmount(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
 }
 function isCount(value: unknown, minimum: number): value is number {
-  return Number.isInteger(value) && (value as number) >= minimum;
+  return (
+    Number.isInteger(value) &&
+    (value as number) >= minimum &&
+    (value as number) <= MAX_INT4
+  );
 }
 function isDay(value: unknown): value is string {
-  return typeof value === 'string' && isValidIso(value);
+  return typeof value === 'string' && ISO_DAY.test(value) && isValidIso(value);
 }
-function text(value: unknown): string {
-  return typeof value === 'string' ? value : '';
-}
-// The id column is a uuid; keep valid ids so a same-account restore is exact.
-function id(value: unknown): string {
-  return typeof value === 'string' && UUID.test(value)
-    ? value
-    : crypto.randomUUID();
+// Optional text: absent → '', anything but a string → invalid (null).
+function optionalText(value: unknown): string | null {
+  if (value === undefined || value === null) {
+    return '';
+  }
+  return typeof value === 'string' ? value : null;
 }
 
 function toSubscription(item: unknown): Subscription | null {
@@ -56,26 +61,32 @@ function toSubscription(item: unknown): Subscription | null {
     return null;
   }
   const { name, cost, cycle, nextRenewal, customIntervalDays } = item;
+  const currency = optionalText(item.currency);
+  const cancelUrl = optionalText(item.cancelUrl);
+  const notes = optionalText(item.notes);
   if (
     !isName(name) ||
     !isAmount(cost) ||
     !CYCLES.has(cycle as BillingCycle) ||
-    !isDay(nextRenewal)
+    (cycle === 'custom' && !isCount(customIntervalDays, 1)) ||
+    !isDay(nextRenewal) ||
+    currency === null ||
+    cancelUrl === null ||
+    notes === null
   ) {
     return null;
   }
   return {
-    id: id(item.id),
+    id: crypto.randomUUID(),
     name,
     cost,
-    currency: text(item.currency) || 'EUR',
+    currency: currency || 'EUR',
     cycle: cycle as BillingCycle,
-    customIntervalDays: isCount(customIntervalDays, 1)
-      ? customIntervalDays
-      : null,
+    customIntervalDays:
+      cycle === 'custom' ? (customIntervalDays as number) : null,
     nextRenewal,
-    cancelUrl: text(item.cancelUrl),
-    notes: text(item.notes),
+    cancelUrl,
+    notes,
   };
 }
 
@@ -91,6 +102,8 @@ function toInstallment(item: unknown): Installment | null {
     firstPaymentDate,
     intervalMonths,
   } = item;
+  const currency = optionalText(item.currency);
+  const notes = optionalText(item.notes);
   if (
     !isName(name) ||
     !isAmount(amountPerPayment) ||
@@ -98,20 +111,22 @@ function toInstallment(item: unknown): Installment | null {
     !isCount(paidPayments, 0) ||
     paidPayments > totalPayments ||
     !isDay(firstPaymentDate) ||
-    !isCount(intervalMonths, 1)
+    !isCount(intervalMonths, 1) ||
+    currency === null ||
+    notes === null
   ) {
     return null;
   }
   return {
-    id: id(item.id),
+    id: crypto.randomUUID(),
     name,
-    currency: text(item.currency) || 'EUR',
+    currency: currency || 'EUR',
     amountPerPayment,
     totalPayments,
     paidPayments,
     firstPaymentDate,
     intervalMonths,
-    notes: text(item.notes),
+    notes,
   };
 }
 
