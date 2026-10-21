@@ -11,3 +11,7 @@ supabase/.temp
 
 # impeccable design-tool artifacts (generated critique snapshots, etc.)
 .impeccable
+
+# agent-generated plans/research (prose docs with code nested in lists that
+# prettier can't stabilise — own formatting)
+docs/agents
