@@ -22,7 +22,9 @@ so a later change can be made on purpose.
 - **No UI library.** The app is small; a handful of CSS tokens and components keep
   the PWA light (see `DESIGN.md`).
 - **Restore replaces everything and assigns fresh ids.** It's validated up front
-  (`src/lib/backup.ts`), so a bad file changes nothing.
+  (`src/lib/backup.ts`) and runs as one Postgres transaction
+  (`restore_backup` in `supabase/schema.sql`), so a bad file or a dropped
+  connection changes nothing.
 - **Demo mode is a build flag** (`VITE_DEMO=1`). It runs the real store with
   synthetic data and no network, so screenshots, the GIF and the hosted demo
   (`/demo/`, built next to the app in `deploy.yml`) never touch a real account.
@@ -47,8 +49,6 @@ Open product or security decisions, not bugs:
 
 Low-likelihood bugs, listed and left for now:
 
-- Restore deletes and then inserts in two requests. A network drop between them
-  loses data. A Postgres function doing both in one transaction would fix it.
 - A refetch that started before an edit can land after it and briefly revert the
   field (store-level race; the next refetch corrects it).
 - Two "Renewed" / "Paid one" taps within one frame count once.

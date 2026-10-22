@@ -88,6 +88,57 @@ drop policy if exists "own reminder log" on public.reminder_log;
 create policy "own reminder log" on public.reminder_log
   for select using (auth.uid() = user_id);
 
+-- ---------- Restore ----------
+-- Settings → Import JSON: replace all of the caller's data in ONE transaction,
+-- so a dropped connection can't leave the account half-deleted. Runs as the
+-- caller (security invoker), so RLS still applies; user_id always comes from
+-- auth.uid(), never from the payload.
+create or replace function public.restore_backup(
+  subscriptions jsonb,
+  installments jsonb,
+  settings jsonb
+) returns void
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'not signed in';
+  end if;
+
+  delete from public.subscriptions where user_id = auth.uid();
+  delete from public.installments where user_id = auth.uid();
+
+  insert into public.subscriptions
+    (id, user_id, name, cost, currency, cycle, custom_interval_days,
+     next_renewal, cancel_url, notes)
+  select id, auth.uid(), name, cost, currency, cycle, custom_interval_days,
+         next_renewal, cancel_url, notes
+  from jsonb_populate_recordset(null::public.subscriptions, subscriptions);
+
+  insert into public.installments
+    (id, user_id, name, currency, amount_per_payment, total_payments,
+     paid_payments, first_payment_date, interval_months, notes)
+  select id, auth.uid(), name, currency, amount_per_payment, total_payments,
+         paid_payments, first_payment_date, interval_months, notes
+  from jsonb_populate_recordset(null::public.installments, installments);
+
+  insert into public.app_settings
+    (user_id, reminder_lead_days, reminder_offsets, recipient_email)
+  select auth.uid(), reminder_lead_days, reminder_offsets, recipient_email
+  from jsonb_populate_record(null::public.app_settings, settings)
+  on conflict (user_id) do update set
+    reminder_lead_days = excluded.reminder_lead_days,
+    reminder_offsets = excluded.reminder_offsets,
+    recipient_email = excluded.recipient_email,
+    updated_at = now();
+end;
+$$;
+
+revoke execute on function public.restore_backup(jsonb, jsonb, jsonb) from public, anon;
+grant execute on function public.restore_backup(jsonb, jsonb, jsonb) to authenticated;
+
 -- ---------- Realtime ----------
 -- Live cross-device sync: add the user-facing tables to the `supabase_realtime`
 -- publication so the app receives postgres_changes events. Idempotent — only
