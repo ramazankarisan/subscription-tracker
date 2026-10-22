@@ -132,6 +132,46 @@ publication block from [`supabase/schema.sql`](../supabase/schema.sql) into the
 **SQL Editor** — it's idempotent. (Alternatively, **Database → Replication →
 `supabase_realtime`** → toggle the three tables on.)
 
+## 5c. WhatsApp agent (optional — draft, finalised later)
+
+Lets you manage the tracker by texting a WhatsApp bot. Runs at **$0** on the
+WhatsApp Cloud API **test number** (≤5 verified recipients) + a permanent Meta
+**System User token** + inbound-only replies (no paid templates). This section
+is a draft for the webhook skeleton; the linking + AI steps are added as the
+feature lands.
+
+1. **Meta app** — [developers.facebook.com](https://developers.facebook.com) →
+   create a **Business** app → add the **WhatsApp** product (this provisions a
+   free test number + a Phone Number ID). Under WhatsApp → API Setup, add your
+   own number as a recipient (verify the code Meta texts you).
+2. **Collect the secrets**:
+   - `WHATSAPP_PHONE_NUMBER_ID` — the test number's ID (API Setup page).
+   - `WHATSAPP_APP_SECRET` — App → Settings → Basic → App Secret (the HMAC key
+     that proves a webhook POST came from Meta).
+   - `WHATSAPP_TOKEN` — Business Settings → **System users** → add an Admin →
+     Generate token for this app with `whatsapp_business_messaging` +
+     `whatsapp_business_management` → **permanent** (the API Setup token expires
+     in 24h — don't use it).
+   - `WHATSAPP_VERIFY_TOKEN` — any random string you invent (used only for the
+     GET verification handshake).
+3. **Set the secrets & deploy**:
+
+   ```bash
+   supabase secrets set \
+     WHATSAPP_TOKEN=... \
+     WHATSAPP_PHONE_NUMBER_ID=... \
+     WHATSAPP_VERIFY_TOKEN=... \
+     WHATSAPP_APP_SECRET=...
+   supabase functions deploy whatsapp-webhook
+   ```
+
+4. **Configure the webhook in Meta** — WhatsApp → Configuration → Webhook →
+   Edit: Callback URL =
+   `https://<project>.supabase.co/functions/v1/whatsapp-webhook`, Verify token =
+   your `WHATSAPP_VERIFY_TOKEN` → **Verify and save** → then **Manage** →
+   subscribe to the **`messages`** field. Texting the test number should now
+   reply `echo: <your text>`.
+
 ## 6. Verify
 
 1. `pnpm dev` → sign in with the magic link → add a subscription → confirm the

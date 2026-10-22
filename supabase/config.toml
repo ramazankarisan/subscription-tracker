@@ -3,3 +3,8 @@
 # so platform JWT verification is disabled for it.
 [functions.send-reminders]
 verify_jwt = false
+
+# The WhatsApp webhook authenticates itself: GET checks the verify token, POST
+# checks the Meta HMAC signature. So platform JWT verification is disabled.
+[functions.whatsapp-webhook]
+verify_jwt = false
