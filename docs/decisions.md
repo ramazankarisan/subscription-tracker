@@ -35,6 +35,9 @@ Open product or security decisions, not bugs:
   any address. Test emails go only to the sign-in address, so the remaining
   exposure is at most one consolidated reminder a day per account, and only
   when something is due. Verifying the recipient address would close it.
+- **Test email has no count limit.** It only reaches the caller now, but one
+  account pressing it repeatedly still uses up Brevo's shared 300/day quota.
+  A per-user daily cap (one counter table) would close it.
 - **On the hosted instance the owner can read every row.** RLS isolates users
   from each other, not from the project owner. Forking gives a private instance.
 - **Edge Function changes need a manual deploy** (`supabase functions deploy`);
