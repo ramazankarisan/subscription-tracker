@@ -6,9 +6,9 @@
 is due, and emails you even when the app is closed.** Built end to end, from
 React UI to Postgres row-level security, with a disciplined AI-agent workflow.
 
-**[Live app](https://ramazankarisan.github.io/subscription-tracker/)** (sign in
-with an email code) · or run the demo locally with `pnpm dev:demo` (sample data,
-no account)
+**[Try the demo](https://ramazankarisan.github.io/subscription-tracker/demo/)**
+(sample data, no sign-in) · [live app](https://ramazankarisan.github.io/subscription-tracker/)
+(sign in with an email code)
 
 <p align="center">
   <img src="docs/screenshots/demo.gif" alt="Demo: mark a renewal and a payment from Home (with undo), then add a subscription" width="300">
@@ -79,7 +79,7 @@ ESLint · Prettier · knip · jscpd · secretlint · lefthook · Claude Code
 
 ```bash
 pnpm install
-pnpm dev:demo   # sample data, no backend: http://localhost:5173/subscription-tracker/
+pnpm dev:demo   # sample data, no backend: http://localhost:5173/subscription-tracker/demo/
 pnpm test       # unit + component tests
 ```
 

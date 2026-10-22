@@ -49,6 +49,12 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 
+      # Sample-data demo at /subscription-tracker/demo/ (no backend, no sign-in).
+      - name: Build demo
+        run: pnpm exec vite build --outDir dist/demo
+        env:
+          VITE_DEMO: '1'
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
