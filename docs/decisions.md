@@ -24,8 +24,10 @@ so a later change can be made on purpose.
 - **Restore replaces everything and assigns fresh ids.** It's validated up front
   (`src/lib/backup.ts`), so a bad file changes nothing.
 - **Demo mode is a build flag** (`VITE_DEMO=1`). It runs the real store with
-  synthetic data and no network, so screenshots, the GIF and a future hosted demo
-  never touch a real account. The seed is tree-shaken out of the normal build.
+  synthetic data and no network, so screenshots, the GIF and the hosted demo
+  (`/demo/`, built next to the app in `deploy.yml`) never touch a real account.
+  The seed is tree-shaken out of the normal build. The demo isn't a PWA, and
+  the app's service worker leaves `/demo/` alone.
 
 ## Known limitations
 
