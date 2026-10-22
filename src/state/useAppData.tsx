@@ -498,8 +498,7 @@ export function AppDataProvider({
     [apply, persist, user.id],
   );
 
-  // Import/restore: replace everything for this user. One persist unit so all
-  // five calls settle before a refetch can interleave.
+  // Import/restore: replace everything for this user.
   const replaceData = useCallback(
     (incoming: AppData) => {
       const next: AppData = {
@@ -508,34 +507,18 @@ export function AppDataProvider({
         settings: { ...emptyData.settings, ...incoming.settings },
       };
       apply(() => next);
-      persist(async () => {
-        const deletes = await Promise.all([
-          supabase.from('subscriptions').delete().eq('user_id', user.id),
-          supabase.from('installments').delete().eq('user_id', user.id),
-        ]);
-        const inserts = await Promise.all([
-          next.subscriptions.length
-            ? supabase
-                .from('subscriptions')
-                .insert(
-                  next.subscriptions.map((s) => subscriptionToRow(s, user.id)),
-                )
-            : Promise.resolve({ error: null }),
-          next.installments.length
-            ? supabase
-                .from('installments')
-                .insert(
-                  next.installments.map((i) => installmentToRow(i, user.id)),
-                )
-            : Promise.resolve({ error: null }),
-          supabase
-            .from('app_settings')
-            .upsert(settingsToRow(next.settings, user.id)),
-        ]);
-        const error =
-          [...deletes, ...inserts].find((r) => r && r.error)?.error ?? null;
-        return { error };
-      });
+      // One transaction server-side (supabase/schema.sql: restore_backup).
+      persist(() =>
+        supabase.rpc('restore_backup', {
+          subscriptions: next.subscriptions.map((item) =>
+            subscriptionToRow(item, user.id),
+          ),
+          installments: next.installments.map((item) =>
+            installmentToRow(item, user.id),
+          ),
+          settings: settingsToRow(next.settings, user.id),
+        }),
+      );
     },
     [apply, persist, user.id],
   );
