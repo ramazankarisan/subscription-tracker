@@ -23,8 +23,14 @@ export function Dashboard({
 }: {
   onNavigate: (tab: TabId) => void;
 }) {
-  const { data, subscriptions, installments, settings, sendTestEmail } =
-    useAppData();
+  const {
+    data,
+    subscriptions,
+    installments,
+    settings,
+    sendTestEmail,
+    userEmail,
+  } = useAppData();
   const leadDays = settings.reminderLeadDays;
 
   const { renew, pay, toast } = useMarkDone();
@@ -167,13 +173,13 @@ export function Dashboard({
           </button>
         ) : sendState === 'sent' ? (
           <p className="email-status email-status-ok" role="status">
-            Test email sent to {settings.recipientEmail}. Reminders are on.
+            Test email sent to {userEmail}. Reminders are on.
           </p>
         ) : (
           <>
             <p className="settings-hint">
               Reminders are emailed to {settings.recipientEmail} automatically.
-              Send one now to check it works:
+              Send a test to {userEmail} to check it works:
             </p>
             <button
               className="button button-ghost button-block"

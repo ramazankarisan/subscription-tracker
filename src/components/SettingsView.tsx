@@ -210,9 +210,7 @@ export function SettingsView() {
       setTestMessage(error);
     } else {
       setTestState('sent');
-      setTestMessage(
-        `Test email sent to ${settings.recipientEmail || 'your inbox'}.`,
-      );
+      setTestMessage(`Test email sent to ${userEmail || 'your inbox'}.`);
     }
   };
 
@@ -399,10 +397,13 @@ export function SettingsView() {
           })}
         </div>
 
+        <p className="settings-hint">
+          The test email goes to your sign-in address, {userEmail}.
+        </p>
         <button
           className="button button-primary button-block"
           onClick={handleTestSend}
-          disabled={!settings.recipientEmail || testState === 'sending'}
+          disabled={testState === 'sending'}
         >
           <MailIcon size={18} />
           {testState === 'sending' ? 'Sending…' : 'Send test email'}
