@@ -6,6 +6,11 @@ import { AppDataProvider, useAppData } from './useAppData';
 
 // Records every write the store sends; reads resolve empty.
 const writes: string[] = [];
+const rpc = vi.fn<(name: string, args: unknown) => Promise<unknown>>((name) => {
+  writes.push(`rpc ${name}`);
+  return Promise.resolve({ error: rpcError });
+});
+let rpcError: unknown = null;
 vi.mock('../lib/supabase', () => {
   const table = (name: string) => {
     const chain: Record<string, unknown> = {
@@ -24,10 +29,7 @@ vi.mock('../lib/supabase', () => {
   return {
     supabase: {
       from: table,
-      rpc: (name: string) => {
-        writes.push(`rpc ${name}`);
-        return Promise.resolve({ error: null });
-      },
+      rpc: (name: string, args: unknown) => rpc(name, args),
       channel: () => channel,
       removeChannel: () => Promise.resolve(),
     },
@@ -42,22 +44,62 @@ function Capture() {
 
 afterEach(cleanup);
 
+async function renderStore() {
+  render(
+    <AppDataProvider user={{ id: 'user-1', email: 'demo@example.com' }}>
+      <Capture />
+    </AppDataProvider>,
+  );
+  await act(async () => {});
+  writes.length = 0;
+  rpc.mockClear();
+}
+
 describe('AppDataProvider restore', () => {
+  beforeEach(() => {
+    rpcError = null;
+  });
+
   // Delete-then-insert in separate requests loses the account's data if the
   // connection drops in between; the server must do both in one transaction.
-  it('sends a restore as one request', async () => {
-    render(
-      <AppDataProvider user={{ id: 'user-1', email: 'demo@example.com' }}>
-        <Capture />
-      </AppDataProvider>,
-    );
-    await act(async () => {});
-    writes.length = 0;
+  it('sends a restore as one request with every row', async () => {
+    await renderStore();
+    const backup = demoData();
+
+    await act(async () => {
+      store.replaceData(backup);
+    });
+
+    expect(writes).toEqual(['rpc restore_backup']);
+    expect(rpc).toHaveBeenCalledWith('restore_backup', {
+      subscriptions: backup.subscriptions.map((item) =>
+        expect.objectContaining({
+          id: item.id,
+          user_id: 'user-1',
+          next_renewal: item.nextRenewal,
+        }),
+      ),
+      installments: backup.installments.map((item) =>
+        expect.objectContaining({
+          id: item.id,
+          paid_payments: item.paidPayments,
+        }),
+      ),
+      settings: expect.objectContaining({
+        user_id: 'user-1',
+        reminder_lead_days: backup.settings.reminderLeadDays,
+      }),
+    });
+  });
+
+  it('shows the sync banner when the restore fails', async () => {
+    await renderStore();
+    rpcError = { message: 'network' };
 
     await act(async () => {
       store.replaceData(demoData());
     });
 
-    expect(writes).toEqual(['rpc restore_backup']);
+    expect(store.syncError).toMatch(/Couldn't save/);
   });
 });

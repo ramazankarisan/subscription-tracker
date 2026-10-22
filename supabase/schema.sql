@@ -106,6 +106,12 @@ begin
   if auth.uid() is null then
     raise exception 'not signed in';
   end if;
+  -- A missing list would read as "replace with nothing" and wipe the rows.
+  if jsonb_typeof(subscriptions) is distinct from 'array'
+     or jsonb_typeof(installments) is distinct from 'array'
+     or jsonb_typeof(settings) is distinct from 'object' then
+    raise exception 'restore payload incomplete';
+  end if;
 
   delete from public.subscriptions where user_id = auth.uid();
   delete from public.installments where user_id = auth.uid();
