@@ -4,7 +4,7 @@ git_commit: b2e4e6c
 branch: main
 topic: 'Portfolio polish: bugs, boundaries, demo mode, docs, UI'
 tags: [plan, settings, backup, demo, docs, ui]
-status: phases 1-6 merged; phase 7 awaiting owner approval
+status: done (#34–#41 merged)
 ---
 
 # PLAN: Portfolio polish
