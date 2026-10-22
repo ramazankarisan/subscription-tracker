@@ -1,0 +1,33 @@
+/* Sits just above the tab bar, inside the app column. */
+.region {
+  position: fixed;
+  left: 50%;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(528px, calc(100% - 32px));
+  z-index: var(--z-nav);
+  pointer-events: none;
+}
+
+/* Focus parks here after Undo; the region itself has no visible box. */
+.region:focus {
+  outline: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 14px;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  pointer-events: auto;
+}
+
+.toast span {
+  flex: 1;
+}

@@ -88,7 +88,8 @@
 
 .dueRow {
   display: flex;
-  align-items: center;
+  /* Top-aligned: the row is taller now that it carries an action. */
+  align-items: flex-start;
   gap: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -123,4 +124,10 @@
 .dueSub {
   font-size: 13px;
   color: var(--text-muted);
+}
+
+/* The one action that clears the item, right where it's seen. */
+.dueAction {
+  align-self: flex-start;
+  margin-top: 8px;
 }
