@@ -5,7 +5,7 @@
  *   • Scheduled cron run — `Authorization: Bearer <CRON_SECRET>`, no `test`.
  *     Iterates every user with settings and emails whatever fires today.
  *   • Test send — `{ "test": true }` with the caller's user access token.
- *     Emails that one user a preview immediately, ignoring the schedule.
+ *     Emails a preview to the caller's sign-in address now, ignoring the schedule.
  *
  * A reminder fires when today is within a small catch-up window of
  * `dueDate − offset` for any configured offset (e.g. 3 and 0 → D-3 and D-0),
@@ -407,23 +407,12 @@ Deno.serve(async (req) => {
       const { data: userRes, error } = await userClient.auth.getUser();
       if (error || !userRes.user) return json(401, { error: 'Not signed in' });
 
-      const { data: s } = await admin
-        .from('app_settings')
-        .select('reminder_offsets,recipient_email')
-        .eq('user_id', userRes.user.id)
-        .maybeSingle();
-      const recipient = await recipientFor(
-        userRes.user.id,
-        s?.recipient_email ?? userRes.user.email ?? '',
-      );
-      if (!recipient) return json(400, { error: 'No recipient email set' });
+      // Previews go only to the caller's own sign-in address, so the button
+      // can't be used to send mail to anyone else.
+      const recipient = userRes.user.email ?? '';
+      if (!recipient) return json(400, { error: 'No email on this account' });
 
-      const r = await processUser(
-        userRes.user.id,
-        s?.reminder_offsets ?? [3, 0],
-        recipient,
-        true,
-      );
+      const r = await processUser(userRes.user.id, [], recipient, true);
       return json(200, { ok: true, ...r });
     }
 
